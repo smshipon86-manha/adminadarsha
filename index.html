@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>আদর্শ ডায়াগনস্টিক সেন্টার - এডমিন প্যানেল</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #0d8a72;
+            --primary-hover: #0a6c59;
+            --danger-color: #e74c3c;
+            --info-color: #0275d8;
+            --warning-color: #f59e0b;
+            --success-color: #10b981;
+            --bg-color: #f4f7f6;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --border-radius: 12px;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: #333; padding-bottom: 30px; }
+        
+        .app-header { background-color: #fff; padding: 15px 20px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .app-title { color: var(--primary-color); font-size: 22px; font-weight: bold; }
+        .admin-badge { font-size: 13px; font-weight: 700; color: #475569; letter-spacing: 0.5px; margin-top: 4px; }
+
+        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+
+        .card { background: #fff; padding: 20px; border-radius: var(--border-radius); box-shadow: var(--card-shadow); margin-bottom: 20px; }
+        .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; color: var(--primary-color); }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 14px; font-weight: bold; color: #444; }
+        .input-control { padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; width: 100%; background: #fff; cursor: pointer; }
+        
+        .btn-submit { grid-column: span 2; background: var(--primary-color); color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 5px; width: 100%; }
+
+        .folder-toggle-btn { background: #e2e8f0; color: #334155; border: none; width: 100%; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; transition: 0.2s; }
+        .folder-toggle-btn:hover { background: #cbd5e1; }
+        .folder-content { display: none; margin-bottom: 20px; }
+        .folder-content.active { display: block; }
+
+        .management-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .management-card { background: #fff; padding: 15px; border-radius: var(--border-radius); box-shadow: var(--card-shadow); border: 1px solid #e2e8f0; }
+        .add-flex { display: flex; gap: 8px; margin-bottom: 12px; }
+        .add-flex input { flex: 1; padding: 8px 10px; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid #eee; margin-bottom: 6px; border-radius: 6px; background: #fafafa; font-size: 13px; }
+        .mgt-btns { display: flex; gap: 4px; }
+        .btn-mgt-edit { background: #fef3c7; color: #d97706; border: none; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-remove { background: #fee2e2; color: #dc2626; border: none; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-add-sm { background: var(--primary-color); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        .filter-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: flex-end; }
+        .btn-report { background: var(--info-color); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; height: 42px; white-space: nowrap; }
+
+        .table-responsive { overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; min-width: 450px; }
+        .data-table th { background: #f8f9fa; padding: 10px; text-align: center; color: #555; font-weight: bold; border-bottom: 2px solid #ddd; }
+        .data-table td { padding: 10px; text-align: center; border-bottom: 1px solid #eee; }
+        
+        .action-btns { display: flex; justify-content: center; gap: 5px; }
+        .action-btn { border: none; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-pay { background: var(--success-color); }
+        .btn-edit { background: var(--warning-color); }
+        .btn-delete { background: var(--danger-color); }
+        .empty-msg { text-align: center; color: #888; padding: 20px; font-style: italic; }
+
+        .loading-badge { font-size: 12px; font-weight: 600; color: #888; display: block; margin-top: 4px; }
+
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; }
+        .modal-content { background: #fff; padding: 14px; border-radius: 14px; width: min(94vw, 520px); max-height: 90vh; overflow-y: auto; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .modal-content h3 { color: var(--primary-color); margin-bottom: 8px; font-size: 16px; }
+        .modal-body { font-size: 14px; margin-bottom: 10px; color: #555; text-align: left; background: #f9f9f9; padding: 8px; border-radius: 8px; }
+        .modal-close { background: var(--danger-color); color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .detail-box { background:#f8fafc; padding:9px; border-radius:9px; }
+        .detail-box > div { padding:5px 0; border-bottom:1px solid #e5e7eb; line-height:1.35; }
+        .detail-box > div:last-child { border-bottom:none; }
+        .detail-edit-title { text-align:center; color:var(--primary-color); font-weight:bold; font-size:16px; margin-bottom:7px; }
+        .edit-box { display:flex; flex-direction:column; gap:4px; }
+        .edit-box label { font-weight:bold; color:#444; font-size:12px; margin-top:1px; line-height:1.2; }
+        .edit-box .input-control { min-height:36px; height:36px; padding:6px 9px; font-size:14px; }
+        .edit-box .btn-submit { grid-column:auto; margin-top:5px; min-height:40px; height:40px; padding:8px 12px; font-size:14px; }
+
+        .app-footer { text-align: center; padding: 15px; font-size: 13px; font-weight: 600; color: #64748b; margin-top: 10px; }
+        
+        @media (max-width:768px) {
+            .modal { align-items:center; padding:8px; overflow-y:auto; }
+            .modal-content { width:min(94vw, 500px); max-height:92vh; overflow-y:auto; padding:10px; border-radius:14px; }
+            .modal-body { padding:6px; margin-bottom:7px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .btn-submit { grid-column: span 1; }
+            .filter-grid { grid-template-columns: 1fr; }
+            .management-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="app-header">
+        <div class="app-title"><i class="fa-solid fa-hospital"></i> আদর্শ ডায়াগনস্টিক সেন্টার</div>
+        <div class="admin-badge"><i class="fa-solid fa-user-shield"></i> এডমিন প্যানেল</div>
+        <span id="online-status" class="loading-badge"><i class="fa-solid fa-spinner fa-spin"></i> সংযোগ পরীক্ষা করা হচ্ছে...</span>
+    </header>
+
+    <div class="container">
+        <!-- New Serial Form Card -->
+        <div class="card">
+            <div class="card-title">
+                <span><i class="fa-solid fa-user-plus"></i> নতুন সিরিয়াল এন্ট্রি করুন</span>
+            </div>
+            <form class="form-grid" id="serial-form" onsubmit="addSerial(event)">
+                <div class="form-group">
+                    <label id="input-date-label">তারিখ নির্বাচন করুন</label>
+                    <input type="date" id="input-date" class="input-control" onclick="this.showPicker()" required>
+                </div>
+                <div class="form-group">
+                    <label>ডাক্তারের নাম</label>
+                    <select id="input-doctor" class="input-control" onchange="handleDoctorChange(this.value)" required>
+                        <option value="">-- ডাক্তার সিলেক্ট করুন --</option>
+                    </select>
+                </div>
+                <!-- ডাইনামিক স্পেশাল অপশন -->
+                <div class="form-group" id="special-serial-group" style="display: none;">
+                    <label style="color: #d97706;"><i class="fa-solid fa-star"></i> স্পেশাল সিরিয়াল?</label>
+                    <select id="input-is-special" class="input-control" style="border-color: #f59e0b; background-color: #fffbeb;">
+                        <option value="no">সাধারণ সিরিয়াল</option>
+                        <option value="yes">স্পেশাল সিরিয়াল</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>রোগীর নাম</label>
+                    <input type="text" id="input-pname" class="input-control" placeholder="রোগীর নাম লিখুন" required>
+                </div>
+                <div class="form-group">
+                    <label>গ্রামের নাম</label>
+                    <input type="text" id="input-village" class="input-control" placeholder="গ্রামের নাম লিখুন" required>
+                </div>
+                <div class="form-group">
+                    <label>রোগীর মোবাইল নাম্বার (ঐচ্ছিক)</label>
+                    <input type="tel" id="input-mobile" class="input-control" placeholder="মোবাইল নাম্বার (ঐচ্ছিক)">
+                </div>
+                <div class="form-group">
+                    <label>রোগীর ধরন</label>
+                    <select id="input-patient-type" class="input-control">
+                        <option value="">-- রোগীর ধরন নির্বাচন করুন --</option>
+                        <option value="নতুন">নতুন</option>
+                        <option value="পুরাতন">পুরাতন</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>ডাক্তারের ফি</label>
+                    <input type="number" id="input-fee" class="input-control" placeholder="ফি (ঐচ্ছিক)">
+                </div>
+                <div class="form-group">
+                    <label>সিরিয়াল প্রদানকারী ব্যক্তি</label>
+                    <select id="input-operator" class="input-control" required>
+                        <option value="">-- স্টাফ সিলেক্ট করুন --</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submit-btn">সিরিয়াল কনফার্ম করুন</button>
+            </form>
+        </div>
+
+        <!-- Management Folder System -->
+        <button type="button" class="folder-toggle-btn" id="mgt-toggle-btn" onclick="toggleManagementFolder()">
+            <span><i class="fa-solid fa-folder-open"></i> ম্যানেজমেন্ট সেটিংস (ডাক্তার ও স্টাফ অ্যাড/এডিট/ডিলিট)</span>
+            <i class="fa-solid fa-chevron-down" id="folder-icon"></i>
+        </button>
+        
+        <div class="folder-content" id="management-folder">
+            <div class="management-grid">
+                <div class="management-card">
+                    <div class="card-title" style="font-size: 14px; margin-bottom: 10px;">
+                        <span><i class="fa-solid fa-user-doctor"></i> ডাক্তার ম্যানেজমেন্ট</span>
+                    </div>
+                    <div class="add-flex">
+                        <input type="text" id="new-doc-name" class="input-control" placeholder="নতুন ডাক্তারের নাম">
+                        <button type="button" class="btn-add-sm" id="btn-add-doc" onclick="addNewDoctorBtn()"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div id="doctor-list-ui" style="max-height: 180px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="management-card">
+                    <div class="card-title" style="font-size: 14px; margin-bottom: 10px;">
+                        <span><i class="fa-solid fa-user-tie"></i> স্টাফ ম্যানেজমেন্ট</span>
+                    </div>
+                    <div class="add-flex">
+                        <input type="text" id="new-operator-name" class="input-control" placeholder="নতুন স্টাফের নাম">
+                        <button type="button" class="btn-add-sm" id="btn-add-op" onclick="addNewOperatorBtn()"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div id="operator-list-ui" style="max-height: 180px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Report Card -->
+        <div class="card">
+            <div class="card-title">
+                <span><i class="fa-solid fa-filter"></i> রিপোর্ট ও ফিল্টার অপশন</span>
+            </div>
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label id="filter-date-label">তারিখ নির্বাচন করুন</label>
+                    <input type="date" id="filter-date" class="input-control" onclick="this.showPicker()">
+                </div>
+                <div class="form-group">
+                    <label>ডাক্তার নির্বাচন</label>
+                    <select id="filter-doctor" class="input-control">
+                        <option value="">-- ডাক্তার সিলেক্ট করুন --</option>
+                    </select>
+                </div>
+                <button type="button" class="btn-report" id="btn-report-print" onclick="printReportPDF()"><i class="fa-solid fa-print"></i> প্রিন্ট / পিডিএফ ডাউনলোড</button>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="card">
+            <div class="card-title">
+                <span id="table-heading-title"><i class="fa-solid fa-list-check"></i> সিরিয়াল তালিকা</span>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>সিরিয়াল</th>
+                            <th>সময়/স্লট</th>
+                            <th>তারিখ</th>
+                            <th>রোগীর নাম</th>
+                            <th>গ্রাম</th>
+                            <th>ফি</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="serial-list"></tbody>
+                </table>
+                <div id="empty-message" class="empty-msg" style="display: none;">দয়া করে একজন ডাক্তার সিলেক্ট করুন অথবা উক্ত ফিল্টারে কোনো সিরিয়াল পাওয়া যায়নি।</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Footer -->
+    <footer class="app-footer">
+        Developed by Shipon
+    </footer>
+
+    <!-- Info / Edit Modal -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-heading">বিস্তারিত তথ্য</h3>
+            <div id="modal-text" class="modal-body">লোড হচ্ছে...</div>
+            <button type="button" class="modal-close" onclick="closeModal()">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, getDocs, setDoc, getDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCU2xBcj8W1NXG7_7EO9CC33yAMtRQ9u5Q",
+            authDomain: "shipon-6e337.firebaseapp.com",
+            projectId: "shipon-6e337",
+            storageBucket: "shipon-6e337.firebasestorage.app",
+            messagingSenderId: "680199241257",
+            appId: "1:680199241257:web:fb2b2faae39cde18582638",
+            measurementId: "G-G07ZGZTY0Q"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let serials = [];
+        let doctors = [];
+        let operators = [];
+        let doctorDocs = [];
+        let operatorDocs = [];
+
+        // গ্লোবাল Enter বাটন হ্যান্ডলার
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const modal = document.getElementById('infoModal');
+                if (modal && modal.style.display === 'flex') {
+                    // মোডাল খোলা থাকলে মোডালের প্রধান অ্যাকশন বাটন ট্রিগার হবে
+                    const modalSubmitBtn = modal.querySelector('.btn-submit');
+                    if (modalSubmitBtn) {
+                        e.preventDefault();
+                        modalSubmitBtn.click();
+                    } else {
+                        const closeBtn = modal.querySelector('.modal-close');
+                        if (closeBtn) {
+                            e.preventDefault();
+                            closeBtn.click();
+                        }
+                    }
+                }
+            }
+        });
+
+        async function initializeManagementData() {
+            try {
+                const setupRef = doc(db, "app_settings", "management_setup");
+                const setupSnap = await getDoc(setupRef);
+
+                if (!setupSnap.exists()) {
+                    await setDoc(doc(db, "doctors", "default_doctor_1"), { name: "ডাঃ শাফিউল আজম" });
+                    await setDoc(doc(db, "doctors", "default_doctor_2"), { name: "ডাঃ আব্দুল মান্নান" });
+                    await setDoc(doc(db, "operators", "default_operator_1"), { name: "শিপন মাহমুদ" });
+                    await setDoc(doc(db, "operators", "default_operator_2"), { name: "রিসেপশন" });
+                    await setDoc(setupRef, { initialized: true, initializedAt: new Date().toISOString() });
+                }
+            } catch (error) {
+                console.error("Management setup error:", error);
+            }
+        }
+
+        function refreshManagementUI() {
+            updateUI();
+            initializeManagementData();
+            updateInternetStatus();
+        }
+
+        onSnapshot(collection(db, "doctors"), (snapshot) => {
+            doctorDocs = snapshot.docs.map(d => ({ id: d.id, name: d.data().name || "" })).filter(x => x.name);
+            doctors = doctorDocs.map(x => x.name);
+            refreshManagementUI();
+        }, (error) => console.error("Doctors listener error:", error));
+
+        onSnapshot(collection(db, "operators"), (snapshot) => {
+            operatorDocs = snapshot.docs.map(d => ({ id: d.id, name: d.data().name || "" })).filter(x => x.name);
+            operators = operatorDocs.map(x => x.name);
+            refreshManagementUI();
+        }, (error) => console.error("Operators listener error:", error));
+
+        window.formatDateBD = function(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : dateStr;
+        };
+
+        window.toTitleCase = function(str) {
+            return str.replace(/\b\w/g, match => match.toUpperCase());
+        };
+
+        window.toggleManagementFolder = function() {
+            if (!navigator.onLine) return;
+            const folder = document.getElementById('management-folder');
+            const icon = document.getElementById('folder-icon');
+            folder.classList.toggle('active');
+            icon.className = folder.classList.contains('active') ? "fa-solid fa-chevron-up" : "fa-solid fa-chevron-down";
+        };
+
+        window.handleDoctorChange = function(docName) {
+            const specialGroup = document.getElementById('special-serial-group');
+            if (isShaifulDoctor(docName)) {
+                specialGroup.style.display = 'flex';
+            } else {
+                specialGroup.style.display = 'none';
+                document.getElementById('input-is-special').value = 'no';
+            }
+        };
+
+        window.updateUI = function() {
+            const docSelect = document.getElementById('input-doctor');
+            const filterDocSelect = document.getElementById('filter-doctor');
+            const doctorListUI = document.getElementById('doctor-list-ui');
+            const opSelect = document.getElementById('input-operator');
+            const operatorListUI = document.getElementById('operator-list-ui');
+
+            const currentDocVal = docSelect.value;
+            const currentFilterDocVal = filterDocSelect.value;
+            const currentOpVal = opSelect.value;
+
+            docSelect.innerHTML = '<option value="">-- ডাক্তার সিলেক্ট করুন --</option>';
+            filterDocSelect.innerHTML = '<option value="">-- ডাক্তার সিলেক্ট করুন --</option>';
+            doctorListUI.innerHTML = '';
+
+            opSelect.innerHTML = '<option value="">-- স্টাফ সিলেক্ট করুন --</option>';
+            operatorListUI.innerHTML = '';
+
+            doctorDocs.forEach((item) => {
+                docSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+                filterDocSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+                doctorListUI.innerHTML += `
+                    <div class="list-item">
+                        <span style="font-weight: 500; color: #444;">${item.name}</span>
+                        <div class="mgt-btns">
+                            <button type="button" class="btn-mgt-edit" onclick="editDoctorNameBtn('${item.id}', '${item.name.replace(/'/g, "\\'")}')" title="এডিট"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" class="btn-remove" onclick="removeDoctorBtn('${item.id}')" title="ডিলিট"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>`;
+            });
+
+            operatorDocs.forEach((item) => {
+                opSelect.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+                operatorListUI.innerHTML += `
+                    <div class="list-item">
+                        <span style="font-weight: 500; color: #444;">${item.name}</span>
+                        <button type="button" class="btn-remove" onclick="removeOperatorBtn('${item.id}')"><i class="fa-solid fa-trash"></i></button>
+                    </div>`;
+            });
+
+            if(doctors.includes(currentDocVal)) docSelect.value = currentDocVal;
+            if(filterDocSelect.querySelector(`option[value="${CSS.escape(currentFilterDocVal)}"]`)) {
+                filterDocSelect.value = currentFilterDocVal;
+            }
+            if(operators.includes(currentOpVal)) opSelect.value = currentOpVal;
+
+            handleDoctorChange(docSelect.value);
+            renderTable();
+        };
+
+        window.addNewDoctorBtn = async function() {
+            if (!navigator.onLine) return;
+            const inputField = document.getElementById('new-doc-name');
+            const newDoc = toTitleCase(inputField.value.trim());
+
+            if (newDoc === "") { alert("দয়া করে ডাক্তারের নাম লিখুন।"); return; }
+            if (doctors.includes(newDoc)) { alert("এই ডাক্তার ইতিমধ্যে তালিকায় আছেন!"); return; }
+
+            try {
+                await addDoc(collection(db, "doctors"), { name: newDoc });
+                inputField.value = '';
+            } catch (error) { alert("ডাক্তার সংরক্ষণ করতে সমস্যা হয়েছে: " + error.message); }
+        };
+
+        window.editDoctorNameBtn = async function(id, currentName) {
+            if (!navigator.onLine) return;
+            const updatedName = prompt("ডাক্তারের নাম পরিবর্তন করুন:", currentName);
+            if (updatedName !== null) {
+                const formattedName = toTitleCase(updatedName.trim());
+                if (formattedName === "") {
+                    alert("ডাক্তারের নাম ফাঁকা রাখা যাবে না!");
+                    return;
+                }
+                try {
+                    await updateDoc(doc(db, "doctors", id), { name: formattedName });
+                } catch (error) {
+                    alert("ডাক্তারের নাম আপডেট করতে সমস্যা হয়েছে: " + error.message);
+                }
+            }
+        };
+
+        window.removeDoctorBtn = async function(id) {
+            if (!navigator.onLine) return;
+            if (confirm("আপনি কি নিশ্চিত এই ডাক্তারকে মুছে ফেলতে চান?")) {
+                try { await deleteDoc(doc(db, "doctors", id)); } 
+                catch (error) { alert("ডাক্তার মুছতে সমস্যা হয়েছে: " + error.message); }
+            }
+        };
+
+        window.addNewOperatorBtn = async function() {
+            if (!navigator.onLine) return;
+            const inputField = document.getElementById('new-operator-name');
+            const newOp = toTitleCase(inputField.value.trim());
+
+            if (newOp === "") { alert("দয়া করে স্টাফের নাম লিখুন।"); return; }
+            if (operators.includes(newOp)) { alert("এই স্টাফ ইতিমধ্যে তালিকায় আছেন!"); return; }
+
+            try {
+                await addDoc(collection(db, "operators"), { name: newOp });
+                inputField.value = '';
+            } catch (error) { alert("স্টাফ সংরক্ষণ করতে সমস্যা হয়েছে: " + error.message); }
+        };
+
+        window.removeOperatorBtn = async function(id) {
+            if (!navigator.onLine) return;
+            if (confirm("আপনি কি নিশ্চিত এই স্টাফকে মুছে ফেলতে চান?")) {
+                try { await deleteDoc(doc(db, "operators", id)); } 
+                catch (error) { alert("স্টাফ মুছতে সমস্যা হয়েছে: " + error.message); }
+            }
+        };
+
+        onSnapshot(collection(db, "diagnostic_serials"), (snapshot) => {
+            serials = [];
+            snapshot.forEach((doc) => { serials.push({ id: doc.id, ...doc.data() }); });
+            serials.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+            updateInternetStatus();
+            renderTable();
+        }, (error) => {
+            updateInternetStatus();
+        });
+
+        window.updateInternetStatus = function() {
+            const status = document.getElementById('online-status');
+            const btn = document.getElementById('submit-btn');
+            const inputs = document.querySelectorAll('.input-control, .btn-remove, .btn-add-sm, .action-btn, .btn-report, .btn-mgt-edit');
+            const folderBtn = document.getElementById('mgt-toggle-btn');
+
+            if (navigator.onLine) {
+                status.innerHTML = '<i class="fa-solid fa-circle" style="color:#16a34a"></i> অনলাইনে সংযুক্ত আছে';
+                if (btn) { 
+                    btn.disabled = false; 
+                    btn.style.opacity = '1'; 
+                    btn.style.cursor = 'pointer'; 
+                    btn.innerText = 'সিরিয়াল কনফার্ম করুন'; 
+                }
+                inputs.forEach(el => { el.disabled = false; el.style.opacity = '1'; });
+                if(folderBtn) { folderBtn.disabled = false; folderBtn.style.opacity = '1'; }
+            } else {
+                status.innerHTML = '<i class="fa-solid fa-circle" style="color:#dc2626"></i> ইন্টারনেট সংযোগ নেই';
+                if (btn) { 
+                    btn.disabled = true; 
+                    btn.style.opacity = '0.6'; 
+                    btn.style.cursor = 'not-allowed'; 
+                    btn.innerText = 'অফলাইনে সিরিয়াল দেওয়া যাবে না'; 
+                }
+                inputs.forEach(el => { el.disabled = true; el.style.opacity = '0.6'; });
+                if(folderBtn) { folderBtn.disabled = true; folderBtn.style.opacity = '0.6'; }
+            }
+        };
+
+        window.addEventListener('online', updateInternetStatus);
+        window.addEventListener('offline', updateInternetStatus);
+
+        const SHAFIUL_NAMES = ['শাফিউল আজম','ডাঃ শাফিউল আজম','ডা. শাফিউল আজম','ডাক্তার শাফিউল আজম'];
+        function isShaifulDoctor(name){
+            const n=String(name||'').replace(/\s+/g,' ').trim();
+            return SHAFIUL_NAMES.some(x=>n===x || n.includes('শাফিউল আজম'));
+        }
+
+        function format12Hour(hour24) {
+            let h = hour24 % 12;
+            if (h === 0) h = 12;
+            const ampm = hour24 >= 12 ? 'PM' : 'AM';
+            return `${String(h).padStart(2, '0')}:00 ${ampm}`;
+        }
+
+        function getShaifulSlot(n){
+            n = parseInt(n, 10); 
+            if (!Number.isFinite(n) || n < 1) return null;
+            const block = Math.floor((n - 1) / 10);
+            const startHour = 8 + block;
+            const endHour = startHour + 1;
+
+            const special = block === 0 ? (n <= 3 || n >= 9) : (n % 10 === 9 || n % 10 === 0);
+            
+            const startFormatted = format12Hour(startHour);
+            const endFormatted = format12Hour(endHour);
+
+            return {
+                special,
+                blockIndex: block,
+                time: `${startFormatted} - ${endFormatted}`
+            };
+        }
+
+        function nextShaifulSerial(existingItems, isSpecial) {
+            const usedSerials = new Set(existingItems.map(x => parseInt(x.serialNo, 10)).filter(Number.isFinite));
+
+            if (!isSpecial) {
+                let candidate = 1;
+                while (true) {
+                    const slot = getShaifulSlot(candidate);
+                    if (slot && !slot.special && !usedSerials.has(candidate)) {
+                        return candidate;
+                    }
+                    candidate++;
+                }
+            } 
+
+            const currentHour = new Date().getHours();
+            let startBlock = currentHour >= 8 ? (currentHour - 8) : 0; 
+
+            let block = startBlock;
+            while (true) {
+                const blockStartSerial = block * 10 + 1;
+                const blockEndSerial = (block + 1) * 10;
+
+                for (let candidate = blockStartSerial; candidate <= blockEndSerial; candidate++) {
+                    const slot = getShaifulSlot(candidate);
+                    if (slot && slot.special && !usedSerials.has(candidate)) {
+                        return candidate;
+                    }
+                }
+                block++;
+            }
+        }
+
+        function nextSerialNumberForDoctor(items, doctor, isSpecial) {
+            if (!isShaifulDoctor(doctor)) {
+                return items.map(x => parseInt(x.serialNo, 10)).filter(Number.isFinite).reduce((m, v) => Math.max(m, v), 0) + 1;
+            }
+            return nextShaifulSerial(items, isSpecial);
+        }
+
+        window.addSerial = async function(event) {
+            event.preventDefault();
+            if (!navigator.onLine) { alert('ইন্টারনেট সংযোগ নেই! অফলাইনে সিরিয়াল দেওয়া যাবে না।'); return; }
+            const date = document.getElementById('input-date').value;
+            const pname = toTitleCase(document.getElementById('input-pname').value.trim());
+            const village = toTitleCase(document.getElementById('input-village').value.trim());
+            const mobile = document.getElementById('input-mobile').value.trim();
+            const doctor = document.getElementById('input-doctor').value;
+            const operator = document.getElementById('input-operator').value;
+            const fee = document.getElementById('input-fee').value || "";
+            const patientType = document.getElementById('input-patient-type').value || "";
+            const isSpecialSelect = document.getElementById('input-is-special').value === 'yes';
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if(!date || !pname || !village || !doctor || !operator) return;
+            
+            submitBtn.innerText = "সংরক্ষণ হচ্ছে..."; submitBtn.disabled = true;
+            try {
+                const serialQuery = query(collection(db,'diagnostic_serials'),where('date','==',date),where('doctor','==',doctor));
+                const existing = await getDocs(serialQuery);
+                const existingItems = existing.docs.map(d=>d.data());
+                
+                const nextNo = nextSerialNumberForDoctor(existingItems, doctor, isSpecialSelect);
+                const newSerialNo = String(nextNo).padStart(3,'0');
+                const slot = isShaifulDoctor(doctor) ? getShaifulSlot(nextNo) : null;
+
+                const newDoc = await addDoc(collection(db,'diagnostic_serials'),{
+                    date,pname,village,mobile,doctor,operator,fee,patientType,
+                    serialNo: newSerialNo,
+                    isSpecial: isSpecialSelect,
+                    timeSlot: slot?.time||'',
+                    timestamp: new Date().toISOString()
+                });
+
+                document.getElementById('input-pname').value='';
+                document.getElementById('input-village').value='';
+                document.getElementById('input-mobile').value='';
+                document.getElementById('input-doctor').value='';
+                document.getElementById('input-operator').value='';
+                document.getElementById('input-fee').value='';
+                document.getElementById('input-patient-type').value='';
+                document.getElementById('input-date').value='';
+                document.getElementById('input-is-special').value='no';
+                document.getElementById('special-serial-group').style.display='none';
+                document.getElementById('input-date-label').textContent='পুনরায় তারিখ নির্বাচন করুন';
+                
+                showSuccessDetails({
+                    id: newDoc.id, date, serialNo: newSerialNo, pname, village, mobile, doctor, operator, fee, patientType, timeSlot: slot?.time||''
+                });
+            } catch(error){ alert('সমস্যা হয়েছে: '+error.message); }
+            finally { updateInternetStatus(); }
+        };
+
+        // ফি আপডেট পপ-আপ (টিক বাটন ক্লিক করলে সরাসরি ফোকাস হবে)
+        window.payFeeOnly = function(id) {
+            if (!navigator.onLine) return;
+            const item = serials.find(x => x.id === id);
+            if(!item) return;
+
+            document.getElementById('modal-heading').innerText = "ডাক্তারের ফি এন্ট্রি করুন";
+            document.getElementById('modal-text').innerHTML = `
+                <div style="text-align:left;">
+                    <div style="margin-bottom:12px; font-size:14px; color:#333;">
+                        <b>রোগীর নাম:</b> ${item.pname}<br>
+                        <b>সিরিয়াল নাম্বার:</b> ${item.serialNo}
+                    </div>
+                    <div class="edit-box">
+                        <label>ডাক্তারের ফি (টাকা)</label>
+                        <input id="quick-fee-input" type="number" class="input-control" placeholder="ফি প্রদান করুন" value="${item.fee || ''}">
+                        <button type="button" class="btn-submit" onclick="saveFeeOnly('${id}')">ফি জমা করুন</button>
+                    </div>
+                </div>`;
+            document.getElementById('infoModal').style.display = 'flex';
+            setTimeout(() => {
+                const input = document.getElementById('quick-fee-input');
+                if (input) { input.focus(); input.select(); }
+            }, 50);
+        };
+
+        window.saveFeeOnly = async function(id) {
+            if(!id || !navigator.onLine) return;
+            const feeVal = document.getElementById('quick-fee-input').value.trim();
+            try {
+                await updateDoc(doc(db, 'diagnostic_serials', id), { fee: feeVal });
+                closeModal();
+            } catch (error) {
+                alert("ফি আপডেট করতে সমস্যা হয়েছে: " + error.message);
+            }
+        };
+
+        window.editSerial = async function(id) {
+            if (!navigator.onLine) return;
+            const item = serials.find(x => x.id === id);
+            if(!item) return;
+            showEditDetails(item);
+        };
+
+        window.deleteSerial = async function(id) {
+            if (!navigator.onLine) return;
+            if(window.confirm("আপনি কি নিশ্চিত এই সিরিয়ালটি মুছে ফেলতে চান?")) {
+                try { await deleteDoc(doc(db, "diagnostic_serials", id)); } 
+                catch (error) { alert("ডিলিট করতে সমস্যা হয়েছে: " + error.message); }
+            }
+        };
+
+        window.showSuccessDetails = function(item) {
+            const safe = (value) => String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+            document.getElementById('modal-heading').innerText = "সিরিয়াল নিশ্চিতকরণ";
+            document.getElementById('modal-text').innerHTML = `
+                <div style="text-align:left;">
+                    <div style="text-align:center; color:#16a34a; font-size:42px; margin-bottom:8px;"><i class="fa-solid fa-circle-check"></i></div>
+                    <div style="text-align:center; font-weight:bold; color:#0d8a72; font-size:20px; margin-bottom:18px;">সিরিয়াল দেওয়া সম্পন্ন হয়েছে</div>
+                    <div class="detail-box">
+                        <div><b>সিরিয়াল নাম্বার:</b> ${safe(item.serialNo)}</div>
+                        ${item.timeSlot ? `<div><b>সময়/স্লট:</b> ${safe(item.timeSlot)}</div>` : ''}
+                        <div><b>তারিখ:</b> ${safe(formatDateBD(item.date))}</div>
+                        <div><b>ডাক্তারের নাম:</b> ${safe(item.doctor)}</div>
+                        <div><b>রোগীর নাম:</b> ${safe(item.pname)}</div>
+                        <div><b>গ্রামের নাম:</b> ${safe(item.village)}</div>
+                        <div><b>মোবাইল:</b> ${safe(item.mobile || 'দেওয়া হয়নি')}</div>
+                        <div><b>রোগীর ধরন:</b> ${safe(item.patientType || 'নির্ধারিত নয়')}</div>
+                        <div><b>ডাক্তারের ফি:</b> ${safe(item.fee || 'নির্ধারিত নয়')}</div>
+                        <div><b>সিরিয়াল প্রদানকারী ব্যক্তি:</b> ${safe(item.operator)}</div>
+                    </div>
+                </div>`;
+            document.getElementById('infoModal').style.display = 'flex';
+        };
+
+        window.showEditDetails = function(item) {
+            const safeAttr = (value) => String(value ?? '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            document.getElementById('modal-heading').innerText = "সিরিয়ালের তথ্য এডিট";
+            document.getElementById('modal-text').innerHTML = `
+                <div style="text-align:left;">
+                    <div class="detail-edit-title"><i class="fa-solid fa-pen-to-square"></i> সিরিয়ালের সম্পূর্ণ তথ্য এডিট করুন</div>
+                    <div class="detail-box edit-box">
+                        <label>সিরিয়াল নাম্বার</label>
+                        <input id="edit-serial" class="input-control" value="${safeAttr(item.serialNo || '')}" readonly style="background:#f1f5f9; font-weight:bold;">
+                        <label>তারিখ</label>
+                        <input id="edit-date" class="input-control" type="date" onclick="this.showPicker()" value="${safeAttr(item.date || '')}">
+                        <label>ডাক্তারের নাম</label>
+                        <select id="edit-doctor" class="input-control"></select>
+                        <label>রোগীর নাম</label>
+                        <input id="edit-pname" class="input-control" value="${safeAttr(item.pname || '')}">
+                        <label>গ্রামের নাম</label>
+                        <input id="edit-village" class="input-control" value="${safeAttr(item.village || '')}">
+                        <label>মোবাইল নাম্বার (ঐচ্ছিক)</label>
+                        <input id="edit-mobile" class="input-control" value="${safeAttr(item.mobile || '')}">
+                        <label>রোগীর ধরন</label>
+                        <select id="edit-type" class="input-control">
+                            <option value="">-- রোগীর ধরন নির্বাচন করুন --</option>
+                            <option value="নতুন">নতুন</option>
+                            <option value="পুরাতন">পুরাতন</option>
+                        </select>
+                        <label>ডাক্তারের ফি</label>
+                        <input id="edit-fee" class="input-control" type="number" value="${safeAttr(item.fee || '')}">
+                        <label>সিরিয়াল প্রদানকারী ব্যক্তি</label>
+                        <select id="edit-operator" class="input-control"></select>
+                        <button type="button" class="btn-submit" onclick="saveViewEdit('${safeAttr(item.id || '')}')">সেভ করুন</button>
+                    </div>
+                </div>`;
+
+            const doctorSelect = document.getElementById('edit-doctor');
+            doctorSelect.innerHTML = '<option value="">-- ডাক্তার সিলেক্ট করুন --</option>';
+            doctorDocs.forEach(x => {
+                const opt = document.createElement('option');
+                opt.value = x.name;
+                opt.textContent = x.name;
+                if (x.name === item.doctor) opt.selected = true;
+                doctorSelect.appendChild(opt);
+            });
+
+            const operatorSelect = document.getElementById('edit-operator');
+            operatorSelect.innerHTML = '<option value="">-- স্টাফ সিলেক্ট করুন --</option>';
+            operatorDocs.forEach(x => {
+                const opt = document.createElement('option');
+                opt.value = x.name;
+                opt.textContent = x.name;
+                if (x.name === item.operator) opt.selected = true;
+                operatorSelect.appendChild(opt);
+            });
+
+            document.getElementById('edit-type').value = item.patientType || '';
+            window.currentEditId = item.id || '';
+            document.getElementById('infoModal').style.display = 'flex';
+            
+            // অটো ফোকাস রোগীর নাম ইনপুট ফিল্ডে
+            setTimeout(() => {
+                const nameInput = document.getElementById('edit-pname');
+                if (nameInput) { nameInput.focus(); nameInput.select(); }
+            }, 50);
+        };
+
+        window.saveViewEdit = async function(id){
+            if(!id || !navigator.onLine) return;
+
+            const date = document.getElementById('edit-date').value;
+            const doctor = document.getElementById('edit-doctor').value;
+            const pname = document.getElementById('edit-pname').value.trim();
+            const village = document.getElementById('edit-village').value.trim();
+            const mobile = document.getElementById('edit-mobile').value.trim();
+            const patientType = document.getElementById('edit-type').value;
+            const fee = document.getElementById('edit-fee').value || '';
+            const operator = document.getElementById('edit-operator').value;
+
+            if(!date || !doctor || !pname || !village || !operator) {
+                alert('দয়া করে তারিখ, ডাক্তার, রোগীর নাম, গ্রামের নাম এবং সিরিয়াল প্রদানকারী নির্বাচন করুন।');
+                return;
+            }
+
+            try {
+                const current = serials.find(x => x.id === id);
+                let serialNo = current?.serialNo || document.getElementById('edit-serial').value || '';
+                let timeSlot = current?.timeSlot || '';
+
+                if (!current || current.date !== date || current.doctor !== doctor) {
+                    const targetQuery = query(
+                        collection(db, "diagnostic_serials"),
+                        where("date", "==", date),
+                        where("doctor", "==", doctor)
+                    );
+                    const targetDocs = await getDocs(targetQuery);
+                    const existingItems = targetDocs.docs.filter(d => d.id !== id).map(d => d.data());
+                    
+                    const nextNo = nextSerialNumberForDoctor(existingItems, doctor, current?.isSpecial || false);
+                    serialNo = String(nextNo).padStart(3, '0');
+                    if(isShaifulDoctor(doctor)){
+                        timeSlot = getShaifulSlot(nextNo)?.time || '';
+                    } else {
+                        timeSlot = '';
+                    }
+                }
+
+                await updateDoc(doc(db, 'diagnostic_serials', id), {
+                    date, serialNo, timeSlot, pname, village, mobile, doctor, patientType, fee, operator
+                });
+
+                closeModal();
+            } catch (error) {
+                alert('তথ্য আপডেট করতে সমস্যা হয়েছে: ' + error.message);
+            }
+        };
+
+        window.closeModal = function() {
+            document.getElementById('infoModal').style.display = 'none';
+        };
+
+        window.renderTable = function() {
+            const tbody = document.getElementById('serial-list');
+            const emptyMsg = document.getElementById('empty-message');
+            const headingTitle = document.getElementById('table-heading-title');
+            
+            const filterDate = document.getElementById('filter-date').value;
+            const filterDoctor = document.getElementById('filter-doctor').value;
+
+            tbody.innerHTML = '';
+
+            if (!filterDoctor) {
+                headingTitle.innerHTML = `<i class="fa-solid fa-list-check"></i> সিরিয়াল তালিকা (ডাক্তার সিলেক্ট করুন)`;
+                emptyMsg.style.display = 'block';
+                emptyMsg.innerText = "রিপোর্ট দেখার জন্য অনুগ্রহ করে একজন ডাক্তার সিলেক্ট করুন।";
+                return;
+            }
+
+            headingTitle.innerHTML = `<i class="fa-solid fa-list-check"></i> সিরিয়াল তালিকা - <span style="color: var(--primary-color);">${filterDoctor}</span>`;
+
+            let count = 0;
+
+            serials.forEach(item => {
+                let matchDate = !filterDate || item.date === filterDate;
+                let matchDoc = item.doctor === filterDoctor;
+
+                if (matchDate && matchDoc) {
+                    count++;
+                    const tr = document.createElement('tr');
+                    const serialDisplay = item.serialNo || String(count).padStart(3, '0');
+                    const slotDisplay = item.timeSlot || (isShaifulDoctor(item.doctor) ? (getShaifulSlot(parseInt(serialDisplay,10))?.time || '-') : '-');
+                    const feeDisplay = item.fee ? `<span style="color:#10b981; font-weight:bold;">${item.fee} ৳</span>` : `<span style="color:#e74c3c; font-weight:bold; font-size:11px;">ফি দেওয়া হয়নি</span>`;
+
+                    tr.innerHTML = `
+                        <td><b>${serialDisplay}</b></td>
+                        <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">${slotDisplay}</span></td>
+                        <td>${formatDateBD(item.date)}</td>
+                        <td style="font-weight: bold; color: #333;">${item.pname}</td>
+                        <td>${item.village}</td>
+                        <td>${feeDisplay}</td>
+                        <td>
+                            <div class="action-btns">
+                                <button type="button" class="action-btn btn-pay" onclick="payFeeOnly('${item.id}')" title="ফি এন্ট্রি করুন"><i class="fa-solid fa-check"></i></button>
+                                <button type="button" class="action-btn btn-edit" onclick="editSerial('${item.id}')" title="এডিট করুন"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" class="action-btn btn-delete" onclick="deleteSerial('${item.id}')" title="বাতিল করুন"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            if (count === 0) {
+                emptyMsg.style.display = 'block';
+                emptyMsg.innerText = "উক্ত ফিল্টারে কোনো সিরিয়াল পাওয়া যায়নি।";
+            } else {
+                emptyMsg.style.display = 'none';
+            }
+        };
+
+        document.getElementById('filter-date').addEventListener('change', function(){ 
+            document.getElementById('filter-date-label').textContent=this.value?'পুনরায় তারিখ নির্বাচন করুন':'তারিখ নির্বাচন করুন'; 
+            renderTable(); 
+        });
+        document.getElementById('filter-doctor').addEventListener('change', renderTable);
+
+        // PDF Print Function
+        window.printReportPDF = function() {
+            if (!navigator.onLine) { alert('ইন্টারনেট সংযোগ না থাকায় পিডিএফ প্রিন্ট করা যাচ্ছে না।'); return; }
+            const filterDate = document.getElementById('filter-date').value;
+            const filterDoctor = document.getElementById('filter-doctor').value;
+
+            if(!filterDoctor) {
+                alert('অনুগ্রহ করে প্রিন্ট করার আগে একজন ডাক্তার সিলেক্ট করুন!');
+                return;
+            }
+
+            let filtered = serials.filter(item => {
+                const matchDate = !filterDate || item.date === filterDate;
+                const matchDoc = item.doctor === filterDoctor;
+                return matchDate && matchDoc;
+            });
+            if(filtered.length===0){ alert('প্রিন্ট বা ডাউনলোড করার মতো কোনো ডাটা পাওয়া যায়নি!'); return; }
+
+            const shaiful = isShaifulDoctor(filterDoctor);
+            if(shaiful && filterDate){
+                const maxExisting=Math.max(...filtered.map(x=>parseInt(x.serialNo,10)).filter(Number.isFinite),0);
+                const end=Math.max(10,Math.ceil(maxExisting/10)*10);
+                const byNo=new Map(filtered.map(x=>[parseInt(x.serialNo,10),x]));
+                const full=[];
+                for(let n=1;n<=end;n++){
+                    const slot=getShaifulSlot(n);
+                    if(byNo.has(n)) {
+                        full.push({...byNo.get(n), _slot:slot, _isSpecialSlot: slot?.special});
+                    } else if(slot?.special) {
+                        full.push({
+                            date:filterDate, serialNo:String(n).padStart(3,'0'), pname:'', village:'', mobile:'', operator:'', fee:'', patientType:'', doctor:filterDoctor,
+                            _slot:slot, _isEmptySpecial: true, _isSpecialSlot: true
+                        });
+                    }
+                }
+                filtered=full;
+            } else {
+                filtered.sort((a,b)=>(parseInt(a.serialNo,10)||0)-(parseInt(b.serialNo,10)||0));
+            }
+
+            let printWindow=window.open('','_blank');
+            if(!printWindow){alert('পপ-আপ ব্লক করা হয়েছে। ব্রাউজারের Pop-up অনুমতি দিয়ে আবার চেষ্টা করুন।');return;}
+            
+            const rows=filtered.map((item,index)=>{
+                const slot=shaiful ? (item._slot||getShaifulSlot(parseInt(item.serialNo,10))) : null;
+                const isSpecial = item._isEmptySpecial || item._isSpecialSlot || item.isSpecial;
+                const rowStyle = (shaiful && isSpecial) ? 'style="background-color: #e2e8f0; -webkit-print-color-adjust: exact;"' : '';
+                
+                return `<tr ${rowStyle}>
+                    <td><b>${item.serialNo||String(index+1).padStart(3,'0')}</b></td>
+                    ${shaiful?`<td>${slot?.time||''}</td>`:''}
+                    <td><b>${item.pname||''}${item.patientType?` (${item.patientType})`:''}</b></td>
+                    <td>${item.village||''}</td>
+                    <td>${item.mobile||''}</td>
+                    <td>${item.operator||''}</td>
+                    <td>${item.fee||''}</td>
+                </tr>`;
+            }).join('');
+
+            printWindow.document.write(`<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title></title><style>*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:"Segoe UI",Tahoma,sans-serif}@page{size:A4;margin:0}body{padding:12mm}.header{text-align:center;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:9px}.header h2{margin:0;font-size:22px;font-weight:bold}.sub-header{font-size:13px;color:#333;margin-top:2px;}.info-box{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:13px;font-weight:bold;border:1px solid #000;padding:8px 10px;border-radius:4px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}th,td{border:1px solid #000;padding:7px 6px;text-align:center;color:#000}th{background:#f2f2f2!important;font-weight:bold}tr{break-inside:avoid;page-break-inside:avoid}@media print{html,body{width:210mm;min-height:297mm}body{padding:12mm}{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="header"><h2>আদর্শ ডায়াগনস্টিক সেন্টার</h2><div class="sub-header">হাসপাতাল গেট, ধুনট, বগুড়া</div></div><div class="info-box"><span>ডাক্তার : ${filterDoctor}</span><span>তারিখ: ${formatDateBD(filterDate)||'সকল সময়'}</span></div><table><thead><tr><th>সিরিয়াল</th>${shaiful?'<th>সময়</th>':''}<th>রোগীর নাম</th><th>গ্রামের নাম</th><th>মোবাইল নাম্বার</th><th>সিরিয়াল প্রদানকারী</th><th>ডাক্তারের ফি</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+            printWindow.document.close(); printWindow.focus(); setTimeout(()=>printWindow.print(),700);
+        };
+        
+        updateUI();
+        initializeManagementData();
+        updateInternetStatus();
+    </script>
+</body>
+</html>
