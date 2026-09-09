@@ -64,6 +64,7 @@
         .action-btn { border: none; width: 30px; height: 30px; border-radius: 6px; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; }
         .btn-pay { background: var(--success-color); }
         .btn-edit { background: var(--warning-color); }
+        .btn-print { background: var(--info-color); }
         .btn-delete { background: var(--danger-color); }
         .empty-msg { text-align: center; color: #888; padding: 20px; font-style: italic; }
 
@@ -84,7 +85,29 @@
         .edit-box .btn-submit { grid-column:auto; margin-top:5px; min-height:40px; height:40px; padding:8px 12px; font-size:14px; }
 
         .app-footer { text-align: center; padding: 15px; font-size: 13px; font-weight: 600; color: #64748b; margin-top: 10px; }
-        
+
+        /* Login Overlay */
+        #login-overlay { position: fixed; inset: 0; background: linear-gradient(135deg, #0d8a72, #0a6c59); z-index: 5000; display: flex; align-items: center; justify-content: center; padding: 15px; }
+        .login-box { background: #fff; width: 100%; max-width: 340px; border-radius: 16px; padding: 30px 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); text-align: center; }
+        .login-box .login-icon { font-size: 40px; color: var(--primary-color); margin-bottom: 8px; }
+        .login-box h2 { color: #222; font-size: 19px; margin-bottom: 4px; }
+        .login-box p { color: #888; font-size: 13px; margin-bottom: 20px; }
+        .login-box .form-group { text-align: left; margin-bottom: 14px; }
+        .login-box .form-group label { font-size: 13px; font-weight: bold; color: #444; display: block; margin-bottom: 6px; }
+        .login-error { color: var(--danger-color); font-size: 13px; font-weight: bold; margin-bottom: 10px; display: none; }
+        .btn-logout { background: none; border: none; color: #dc2626; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 4px; }
+
+        /* Print receipt (58mm thermal) */
+        .receipt-body { width: 58mm; margin: 0 auto; font-family: 'Segoe UI', Tahoma, sans-serif; color: #000; padding: 3mm 2mm; }
+        .receipt-body .r-title { text-align: center; font-weight: bold; font-size: 15px; }
+        .receipt-body .r-sub { text-align: center; font-size: 10px; margin-bottom: 4px; }
+        .receipt-body hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+        .receipt-body .r-serial { text-align: center; font-size: 30px; font-weight: 900; margin: 4px 0; }
+        .receipt-body .r-serial-label { text-align: center; font-size: 11px; font-weight: bold; }
+        .receipt-body .r-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+        .receipt-body .r-row b { font-weight: bold; }
+        .receipt-body .r-footer { text-align: center; font-size: 10px; margin-top: 8px; }
+
         @media (max-width:768px) {
             .modal { align-items:center; padding:8px; overflow-y:auto; }
             .modal-content { width:min(94vw, 500px); max-height:92vh; overflow-y:auto; padding:10px; border-radius:14px; }
@@ -98,10 +121,32 @@
 </head>
 <body>
 
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <div class="login-icon"><i class="fa-solid fa-lock"></i></div>
+            <h2>এডমিন লগইন</h2>
+            <p>আদর্শ ডায়াগনস্টিক সেন্টার</p>
+            <div id="login-error" class="login-error"><i class="fa-solid fa-circle-exclamation"></i> ইমেইল অথবা পাসওয়ার্ড ভুল হয়েছে</div>
+            <form id="login-form" onsubmit="return handleLogin(event)">
+                <div class="form-group">
+                    <label>ইমেইল</label>
+                    <input type="email" id="login-username" class="input-control" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                    <label>পাসওয়ার্ড</label>
+                    <input type="password" id="login-password" class="input-control" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn-submit"><i class="fa-solid fa-right-to-bracket"></i> লগইন করুন</button>
+            </form>
+        </div>
+    </div>
+
     <header class="app-header">
         <div class="app-title"><i class="fa-solid fa-hospital"></i> আদর্শ ডায়াগনস্টিক সেন্টার</div>
         <div class="admin-badge"><i class="fa-solid fa-user-shield"></i> এডমিন প্যানেল</div>
         <span id="online-status" class="loading-badge"><i class="fa-solid fa-spinner fa-spin"></i> সংযোগ পরীক্ষা করা হচ্ছে...</span>
+        <button type="button" class="btn-logout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> লগআউট</button>
     </header>
 
     <div class="container">
@@ -229,6 +274,7 @@
                             <th>তারিখ</th>
                             <th>রোগীর নাম</th>
                             <th>গ্রাম</th>
+                            <th>রোগীর ধরন</th>
                             <th>স্টাফ</th>
                             <th>ফি</th>
                             <th>অ্যাকশন</th>
@@ -255,10 +301,12 @@
         </div>
     </div>
 
+
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, getDocs, setDoc, getDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCU2xBcj8W1NXG7_7EO9CC33yAMtRQ9u5Q",
@@ -272,6 +320,64 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // content:// বা file:// থেকে খোলার সময় IndexedDB/localStorage কাজ নাও করতে পারে,
+        // তাই ব্রাউজার স্টোরেজের বদলে in-memory persistence ব্যবহার করা হচ্ছে (ঝুলে থাকা এড়াতে)
+        setPersistence(auth, inMemoryPersistence).catch(() => {});
+
+        // ===== Firebase Authentication (Email/Password) Login System =====
+        window.handleLogin = async function(event) {
+            event.preventDefault();
+            const emailInput = document.getElementById('login-username');
+            const passInput = document.getElementById('login-password');
+            const errorBox = document.getElementById('login-error');
+            const submitBtn = document.querySelector('#login-form button[type="submit"]');
+
+            const email = emailInput.value.trim();
+            const password = passInput.value;
+
+            errorBox.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'লগইন হচ্ছে...';
+
+            try {
+                const loginPromise = signInWithEmailAndPassword(auth, email, password);
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject({ code: 'custom/timeout' }), 15000)
+                );
+                await Promise.race([loginPromise, timeoutPromise]);
+                document.getElementById('login-form').reset();
+                // সফল হলে onAuthStateChanged অটোমেটিক overlay লুকিয়ে দেবে
+            } catch (error) {
+                let msg = 'ইমেইল অথবা পাসওয়ার্ড ভুল হয়েছে';
+                if (error.code === 'auth/invalid-email') msg = 'সঠিক ইমেইল ঠিকানা দিন';
+                if (error.code === 'auth/too-many-requests') msg = 'অনেকবার চেষ্টা করা হয়েছে, কিছুক্ষণ পর আবার চেষ্টা করুন';
+                if (error.code === 'custom/timeout') msg = '১৫ সেকেন্ডেও সার্ভার থেকে উত্তর আসেনি — ইন্টারনেট সংযোগ বা নেটওয়ার্ক সমস্যা হতে পারে';
+                errorBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${msg}<br><small style="opacity:0.8;">(ডিবাগ কোড: ${error.code || error.message})</small>`;
+                errorBox.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> লগইন করুন';
+            }
+            return false;
+        };
+
+        window.handleLogout = function() {
+            if (confirm('আপনি কি লগআউট করতে চান?')) {
+                signOut(auth);
+            }
+        };
+
+        // লগইন অবস্থা পরিবর্তন হলে (লগইন/লগআউট) স্বয়ংক্রিয়ভাবে ওভারলে দেখাবে বা লুকাবে
+        onAuthStateChanged(auth, (user) => {
+            const overlay = document.getElementById('login-overlay');
+            if (user) {
+                overlay.style.display = 'none';
+            } else {
+                overlay.style.display = 'flex';
+            }
+        });
 
         let serials = [];
         let doctors = [];
@@ -670,9 +776,81 @@
             try {
                 await updateDoc(doc(db, 'diagnostic_serials', id), { fee: feeVal });
                 closeModal();
+
+                const item = serials.find(x => x.id === id);
+                if (item) {
+                    printReceipt58mm({ ...item, fee: feeVal });
+                }
             } catch (error) {
-                alert("ফি আপডেট করতে সমস্যা হয়েছে: " + error.message);
+                alert("ফি আপডেট করতে সমস্যা হয়েছে: " + error.message);
             }
+        };
+
+        // ৫৮মিমি থার্মাল প্রিন্টার (Xprinter XP-P504A) এর জন্য রিসিট প্রিন্ট ফাংশন
+        window.printReceipt58mm = function(item) {
+            const printWindow = window.open('', '_blank', 'width=380,height=600');
+            if (!printWindow) { alert('পপ-আপ ব্লক করা হয়েছে। ব্রাউজারের Pop-up অনুমতি দিয়ে আবার চেষ্টা করুন।'); return; }
+
+            const safe = (v) => String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+            const html = `<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>রিসিট প্রিন্ট</title>
+<style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: #fff; }
+    @page { size: 58mm auto; margin: 0; }
+    @media print { html, body { width: 58mm; } }
+    .receipt-body { width: 58mm; margin: 0 auto; font-family: 'Nirmala UI', 'Vrinda', 'Segoe UI', Tahoma, sans-serif; color: #000; padding: 3mm 2mm; line-height: 1.45; }
+    .r-title { text-align: center; font-weight: bold; font-size: 16px; }
+    .r-sub { text-align: center; font-size: 11px; margin-bottom: 4px; }
+    hr { border: none; border-top: 1px dashed #000; margin: 5px 0; }
+    .r-serial { text-align: center; font-size: 36px; font-weight: 900; margin: 4px 0; letter-spacing: 1px; }
+    .r-serial-label { text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
+    .r-row { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
+    .r-row b { font-weight: bold; }
+    .r-footer { text-align: center; font-size: 11px; margin-top: 8px; }
+    .r-dev-credit { text-align: center; font-size: 9px; color: #555; margin-top: 6px; }
+</style>
+</head>
+<body>
+    <div class="receipt-body">
+        <div class="r-title">আদর্শ ডায়াগনস্টিক সেন্টার</div>
+        <div class="r-sub">হাসপাতাল গেট, ধুনট, বগুড়া</div>
+        <hr>
+        <div class="r-serial-label">সিরিয়াল নং</div>
+        <div class="r-serial">${safe(item.serialNo)}</div>
+        <hr>
+        <div class="r-row"><span>ডাক্তার:</span> <b>${safe(item.doctor)}</b></div>
+        <div class="r-row"><span>তারিখ:</span> <b>${safe(formatDateBD(item.date))}</b></div>
+        ${item.timeSlot ? `<div class="r-row"><span>সময়:</span> <b>${safe(item.timeSlot)}</b></div>` : ''}
+        <hr>
+        <div class="r-row"><span>রোগীর নাম:</span> <b>${safe(item.pname)}</b></div>
+        <div class="r-row"><span>গ্রাম:</span> <b>${safe(item.village)}</b></div>
+        <div class="r-row"><span>রোগীর ধরন:</span> <b>${safe(item.patientType || '-')}</b></div>
+        <hr>
+        <div class="r-row"><span>সিরিয়াল প্রদানকারী:</span> <b>${safe(item.operator)}</b></div>
+        <div class="r-row"><span>ডাক্তারের ফি:</span> <b>${safe(item.fee || '-')} ৳</b></div>
+        <div class="r-footer">ধন্যবাদ</div>
+        <div class="r-dev-credit">Developed by Shipon</div>
+    </div>
+</body>
+</html>`;
+
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); }, 400);
+        };
+
+        // অ্যাকশন কলামের প্রিন্ট বাটন থেকে সরাসরি রিসিট প্রিন্ট
+        window.printSingleReceipt = function(id) {
+            const item = serials.find(x => x.id === id);
+            if (!item) { alert('তথ্য খুঁজে পাওয়া যায়নি।'); return; }
+            printReceipt58mm(item);
         };
 
         window.editSerial = async function(id) {
@@ -851,7 +1029,8 @@
                     const tr = document.createElement('tr');
                     const serialDisplay = item.serialNo || String(count).padStart(3, '0');
                     const slotDisplay = item.timeSlot || (isShaifulDoctor(item.doctor) ? (getShaifulSlot(parseInt(serialDisplay,10))?.time || '-') : '-');
-                    const feeDisplay = item.fee ? `<span style="color:#10b981; font-weight:bold;">${item.fee} ৳</span>` : `<span style="color:#e74c3c; font-weight:bold; font-size:11px;">ফি দেওয়া হয়নি</span>`;
+                    const feeDisplay = item.fee ? `<span style="color:#10b981; font-weight:bold;">${item.fee} ৳</span>` : `<span style="color:#e74c3c; font-weight:bold; font-size:11px;">ফি দেওয়া হয়নি</span>`;
+                    const typeDisplay = item.patientType ? `<span style="background:${item.patientType==='নতুন'?'#dcfce7':'#fef3c7'}; color:${item.patientType==='নতুন'?'#15803d':'#b45309'}; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">${item.patientType}</span>` : '<span style="color:#aaa; font-size:11px;">-</span>';
 
                     tr.innerHTML = `
                         <td><b>${serialDisplay}</b></td>
@@ -859,12 +1038,14 @@
                         <td>${formatDateBD(item.date)}</td>
                         <td style="font-weight: bold; color: #333;">${item.pname}</td>
                         <td>${item.village}</td>
+                        <td>${typeDisplay}</td>
                         <td>${item.operator || '-'}</td>
                         <td>${feeDisplay}</td>
                         <td>
                             <div class="action-btns">
                                 <button type="button" class="action-btn btn-pay" onclick="payFeeOnly('${item.id}')" title="ফি এন্ট্রি করুন"><i class="fa-solid fa-check"></i></button>
                                 <button type="button" class="action-btn btn-edit" onclick="editSerial('${item.id}')" title="এডিট করুন"><i class="fa-solid fa-pen"></i></button>
+                                <button type="button" class="action-btn btn-print" onclick="printSingleReceipt('${item.id}')" title="রিসিট প্রিন্ট করুন"><i class="fa-solid fa-print"></i></button>
                                 <button type="button" class="action-btn btn-delete" onclick="deleteSerial('${item.id}')" title="বাতিল করুন"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </td>
@@ -946,7 +1127,18 @@
                 </tr>`;
             }).join('');
 
-            printWindow.document.write(`<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title></title><style>*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:"Segoe UI",Tahoma,sans-serif}@page{size:A4;margin:0}body{padding:12mm}.header{text-align:center;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:9px}.header h2{margin:0;font-size:22px;font-weight:bold}.sub-header{font-size:13px;color:#333;margin-top:2px;}.info-box{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:13px;font-weight:bold;border:1px solid #000;padding:8px 10px;border-radius:4px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}th,td{border:1px solid #000;padding:7px 6px;text-align:center;color:#000}th{background:#f2f2f2!important;font-weight:bold}tr{break-inside:avoid;page-break-inside:avoid}@media print{html,body{width:210mm;min-height:297mm}body{padding:12mm}{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="header"><h2>আদর্শ ডায়াগনস্টিক সেন্টার</h2><div class="sub-header">হাসপাতাল গেট, ধুনট, বগুড়া</div></div><div class="info-box"><span>ডাক্তার : ${filterDoctor}</span><span>তারিখ: ${formatDateBD(filterDate)||'সকল সময়'}</span></div><table><thead><tr><th>সিরিয়াল</th>${shaiful?'<th>সময়</th>':''}<th>রোগীর নাম</th><th>গ্রামের নাম</th><th>মোবাইল নাম্বার</th><th>সিরিয়াল প্রদানকারী</th><th>ডাক্তারের ফি</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+            // যত টাকার ফি এন্ট্রি হয়েছে তার মোট যোগফল (খালি/অসংখ্যাসূচক ফি বাদ দিয়ে)
+            const totalFee = filtered.reduce((sum, item) => {
+                const feeNum = parseFloat(item.fee);
+                return sum + (Number.isFinite(feeNum) ? feeNum : 0);
+            }, 0);
+            const totalColspan = shaiful ? 6 : 5;
+            const totalRow = `<tr style="font-weight:bold; background:#f2f2f2; -webkit-print-color-adjust:exact;">
+                <td colspan="${totalColspan}" style="text-align:right;">সর্বমোট ফি</td>
+                <td>${totalFee} ৳</td>
+            </tr>`;
+
+            printWindow.document.write(`<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title></title><style>*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff;color:#000;font-family:"Segoe UI",Tahoma,sans-serif}@page{size:A4;margin:0}body{padding:12mm}.header{text-align:center;margin-bottom:16px;border-bottom:2px solid #000;padding-bottom:9px}.header h2{margin:0;font-size:22px;font-weight:bold}.sub-header{font-size:13px;color:#333;margin-top:2px;}.info-box{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:13px;font-weight:bold;border:1px solid #000;padding:8px 10px;border-radius:4px}table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}th,td{border:1px solid #000;padding:7px 6px;text-align:center;color:#000}th{background:#f2f2f2!important;font-weight:bold}tr{break-inside:avoid;page-break-inside:avoid}@media print{html,body{width:210mm;min-height:297mm}body{padding:12mm}{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body><div class="header"><h2>আদর্শ ডায়াগনস্টিক সেন্টার</h2><div class="sub-header">হাসপাতাল গেট, ধুনট, বগুড়া</div></div><div class="info-box"><span>ডাক্তার : ${filterDoctor}</span><span>তারিখ: ${formatDateBD(filterDate)||'সকল সময়'}</span></div><table><thead><tr><th>সিরিয়াল</th>${shaiful?'<th>সময়</th>':''}<th>রোগীর নাম</th><th>গ্রামের নাম</th><th>মোবাইল নাম্বার</th><th>সিরিয়াল প্রদানকারী</th><th>ডাক্তারের ফি</th></tr></thead><tbody>${rows}${totalRow}</tbody></table></body></html>`);
             printWindow.document.close(); printWindow.focus(); setTimeout(()=>printWindow.print(),700);
         };
         
