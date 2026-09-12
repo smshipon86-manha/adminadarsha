@@ -640,21 +640,31 @@
             return `${String(h).padStart(2, '0')}:00 ${ampm}`;
         }
 
+        // স্পেশাল সিরিয়াল নাম্বার নির্ধারণ — এটা আগের ১০-ভিত্তিক নিয়ম অনুযায়ীই থাকবে
+        // (১,২,৩,৯,১০ / ১৯,২০ / ২৯,৩০ / ৩৯,৪০ ...), সময়ের ব্লক সাইজ বদলালেও এই
+        // নির্দিষ্ট নাম্বারগুলো অপরিবর্তিত থাকবে — তাই সময়ের হিসাব থেকে এটা আলাদা রাখা হয়েছে।
+        function getShaifulSpecial(n) {
+            const tenBlock = Math.floor((n - 1) / 10);
+            if (tenBlock === 0) return (n <= 3 || n >= 9);
+            return (n % 10 === 9 || n % 10 === 0);
+        }
+
         function getShaifulSlot(n){
             n = parseInt(n, 10); 
             if (!Number.isFinite(n) || n < 1) return null;
-            const block = Math.floor((n - 1) / 10);
-            const startHour = 8 + block;
+            // সময়ের ব্লক: প্রতি ২০টি সিরিয়ালে ১ ঘন্টা (১-২০ = ৮টা-৯টা, ২১-৪০ = ৯টা-১০টা, ...)
+            const hourBlock = Math.floor((n - 1) / 20);
+            const startHour = 8 + hourBlock;
             const endHour = startHour + 1;
 
-            const special = block === 0 ? (n <= 3 || n >= 9) : (n % 10 === 9 || n % 10 === 0);
+            const special = getShaifulSpecial(n);
             
             const startFormatted = format12Hour(startHour);
             const endFormatted = format12Hour(endHour);
 
             return {
                 special,
-                blockIndex: block,
+                blockIndex: hourBlock,
                 time: `${startFormatted} - ${endFormatted}`
             };
         }
@@ -674,20 +684,21 @@
             } 
 
             const currentHour = new Date().getHours();
-            let startBlock = currentHour >= 8 ? (currentHour - 8) : 0; 
+            let startHourBlock = currentHour >= 8 ? (currentHour - 8) : 0; 
 
-            let block = startBlock;
+            // এখন প্রতি ঘন্টার রেঞ্জ ২০টি সিরিয়াল নিয়ে গঠিত, তাই খোঁজার সীমাও ২০-ভিত্তিক
+            let hourBlock = startHourBlock;
             while (true) {
-                const blockStartSerial = block * 10 + 1;
-                const blockEndSerial = (block + 1) * 10;
+                const hourStartSerial = hourBlock * 20 + 1;
+                const hourEndSerial = (hourBlock + 1) * 20;
 
-                for (let candidate = blockStartSerial; candidate <= blockEndSerial; candidate++) {
+                for (let candidate = hourStartSerial; candidate <= hourEndSerial; candidate++) {
                     const slot = getShaifulSlot(candidate);
                     if (slot && slot.special && !usedSerials.has(candidate)) {
                         return candidate;
                     }
                 }
-                block++;
+                hourBlock++;
             }
         }
 
