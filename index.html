@@ -306,7 +306,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, getDocs, setDoc, getDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDdSS-T4oCORhTmaeFxEIr2vNtyolLOHfw",
@@ -322,9 +322,10 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // content:// বা file:// থেকে খোলার সময় IndexedDB/localStorage কাজ নাও করতে পারে,
-        // তাই ব্রাউজার স্টোরেজের বদলে in-memory persistence ব্যবহার করা হচ্ছে (ঝুলে থাকা এড়াতে)
-        setPersistence(auth, inMemoryPersistence).catch(() => {});
+        // এখন ফাইলটা সঠিকভাবে হোস্ট করা (https://) URL থেকে খোলা হয়, তাই ব্রাউজারের
+        // স্থায়ী স্টোরেজ (localStorage/IndexedDB) নিরাপদে ব্যবহার করা যায় — এতে একবার
+        // লগইন করলে ডিভাইসে লগইন থাকবে, লগআউট না করা পর্যন্ত বারবার চাইবে না।
+        setPersistence(auth, browserLocalPersistence).catch(() => {});
 
         // ===== Firebase Authentication (Email/Password) Login System =====
         window.handleLogin = async function(event) {
