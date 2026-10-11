@@ -66,6 +66,11 @@
         .btn-edit { background: var(--warning-color); }
         .btn-print { background: var(--info-color); }
         .btn-delete { background: var(--danger-color); }
+        .action-btns { flex-wrap: wrap; }
+        .action-btn.btn-rpt { width: auto; padding: 0 10px; font-size: 12px; font-weight: bold; gap: 5px; white-space: nowrap; }
+        .btn-rpt.rpt-none { background: #7c3aed; }
+        .btn-rpt.rpt-pending { background: #f59e0b; }
+        .btn-rpt.rpt-seen { background: #16a34a; cursor: default; }
         .empty-msg { text-align: center; color: #888; padding: 20px; font-style: italic; }
 
         .loading-badge { font-size: 12px; font-weight: 600; color: #888; display: block; margin-top: 4px; }
@@ -585,16 +590,38 @@
             }
         };
 
-        onSnapshot(collection(db, "diagnostic_serials"), (snapshot) => {
+        // রিড কমানোর জন্য: পুরো কালেকশন নয়, শুধু নির্বাচিত তারিখের সিরিয়াল লাইভ শোনা হয়।
+        // তারিখ বদলালে আগের শোনা বন্ধ হয়ে নতুন তারিখের জন্য শুরু হয়।
+        let serialsUnsub = null;
+        let serialsListenDate = null;
+        function listenSerialsForDate(dateStr) {
+            if (serialsUnsub && serialsListenDate === dateStr) return;
+            if (serialsUnsub) { serialsUnsub(); serialsUnsub = null; }
+            serialsListenDate = dateStr;
             serials = [];
-            snapshot.forEach((doc) => { serials.push({ id: doc.id, ...doc.data() }); });
-            serials.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
-            initialDataLoaded = true;
-            updateInternetStatus();
-            renderTable();
-        }, (error) => {
-            updateInternetStatus();
-        });
+            initialDataLoaded = false;
+            if (!dateStr) { renderTable(); return; }
+            serialsUnsub = onSnapshot(query(collection(db, "diagnostic_serials"), where('date', '==', dateStr)), (snapshot) => {
+                serials = [];
+                snapshot.forEach((doc) => { serials.push({ id: doc.id, ...doc.data() }); });
+                serials.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+                initialDataLoaded = true;
+                updateInternetStatus();
+                renderTable();
+            }, (error) => {
+                updateInternetStatus();
+            });
+        }
+
+        // ডিফল্ট তারিখ = আজকের তারিখ (লোকাল সময় অনুযায়ী)
+        (function initFilterDate() {
+            const el = document.getElementById('filter-date');
+            const now = new Date();
+            const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            if (!el.value) el.value = todayLocal;
+            document.getElementById('filter-date-label').textContent = 'পুনরায় তারিখ নির্বাচন করুন';
+            listenSerialsForDate(el.value);
+        })();
 
         window.updateInternetStatus = function() {
             const status = document.getElementById('online-status');
@@ -650,12 +677,30 @@
             return (n % 10 === 9 || n % 10 === 0);
         }
 
+
+        // ব্রেক টাইম (শুধু ডাঃ শাফিউল আজমের জন্য): ১১:০০–১২:০০ এবং ২:০০–৩:০০ — এই দুই ঘন্টায় কোনো সিরিয়াল বসবে না।
+        // সিরিয়াল নাম্বার একটানাই চলবে, শুধু ঘন্টা দুটি বাদ দিয়ে পরের ঘন্টায় সময় বসবে।
+        const SHAIFUL_BREAK_HOURS = [11, 14];
+        function shaifulBlockStartHour(blockIndex) {
+            let h = 8, count = 0;
+            while (true) {
+                if (SHAIFUL_BREAK_HOURS.includes(h)) { h++; continue; }
+                if (count === blockIndex) return h;
+                count++; h++;
+            }
+        }
+        function shaifulBlockForHour(hour24) {
+            let b = 0;
+            for (let h = 8; h < hour24; h++) { if (!SHAIFUL_BREAK_HOURS.includes(h)) b++; }
+            return b;
+        }
+
         function getShaifulSlot(n){
             n = parseInt(n, 10); 
             if (!Number.isFinite(n) || n < 1) return null;
             // সময়ের ব্লক: প্রতি ২০টি সিরিয়ালে ১ ঘন্টা (১-২০ = ৮টা-৯টা, ২১-৪০ = ৯টা-১০টা, ...)
             const hourBlock = Math.floor((n - 1) / 20);
-            const startHour = 8 + hourBlock;
+            const startHour = shaifulBlockStartHour(hourBlock);
             const endHour = startHour + 1;
 
             const special = getShaifulSpecial(n);
@@ -685,7 +730,7 @@
             } 
 
             const currentHour = new Date().getHours();
-            let startHourBlock = currentHour >= 8 ? (currentHour - 8) : 0; 
+            let startHourBlock = shaifulBlockForHour(currentHour); // ব্রেকের ঘন্টা হলে পরের ঘন্টার ব্লক 
 
             // এখন প্রতি ঘন্টার রেঞ্জ ২০টি সিরিয়াল নিয়ে গঠিত, তাই খোঁজার সীমাও ২০-ভিত্তিক
             let hourBlock = startHourBlock;
@@ -1040,6 +1085,21 @@
             document.getElementById('infoModal').style.display = 'none';
         };
 
+        // ডাঃ শাফিউল আজমের সিরিয়ালে "রিপোর্ট আছে" চিহ্ন (ডাক্তার প্যানেলে লাইভ দেখাবে)
+        window.markReportAvailable = async function(id) {
+            if (!navigator.onLine) { alert('ইন্টারনেট সংযোগ নেই।'); return; }
+            try {
+                await updateDoc(doc(db, 'diagnostic_serials', id), { reportStatus: 'pending', reportMarkedAt: new Date().toISOString() });
+            } catch (e) { console.error(e); alert('রিপোর্টের স্ট্যাটাস সেভ করা যায়নি, আবার চেষ্টা করুন।'); }
+        };
+        window.cancelReportFlag = async function(id) {
+            if (!navigator.onLine) { alert('ইন্টারনেট সংযোগ নেই।'); return; }
+            if (!window.confirm('ডাক্তারের কাছে পাঠানো "রিপোর্ট আছে" চিহ্নটি বাতিল করতে চান?')) return;
+            try {
+                await updateDoc(doc(db, 'diagnostic_serials', id), { reportStatus: '', reportMarkedAt: '' });
+            } catch (e) { console.error(e); alert('বাতিল করা যায়নি, আবার চেষ্টা করুন।'); }
+        };
+
         window.renderTable = function() {
             const tbody = document.getElementById('serial-list');
             const emptyMsg = document.getElementById('empty-message');
@@ -1073,6 +1133,16 @@
                     const feeDisplay = item.fee ? `<span style="color:#10b981; font-weight:bold;">${item.fee} ৳</span>` : `<span style="color:#e74c3c; font-weight:bold; font-size:11px;">ফি দেওয়া হয়নি</span>`;
                     const typeDisplay = item.patientType ? `<span style="background:${item.patientType==='নতুন'?'#dcfce7':'#fef3c7'}; color:${item.patientType==='নতুন'?'#15803d':'#b45309'}; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">${item.patientType}</span>` : '<span style="color:#aaa; font-size:11px;">-</span>';
 
+                    let reportBtnHtml = '';
+                    if (isShaifulDoctor(item.doctor)) {
+                        if (item.reportStatus === 'seen') {
+                            reportBtnHtml = `<button type="button" class="action-btn btn-rpt rpt-seen" title="ডাক্তার রিপোর্ট দেখেছেন"><i class="fa-solid fa-check-double"></i> রিপোর্ট দেখা হয়েছে</button>`;
+                        } else if (item.reportStatus === 'pending') {
+                            reportBtnHtml = `<button type="button" class="action-btn btn-rpt rpt-pending" onclick="cancelReportFlag('${item.id}')" title="ডাক্তারের কাছে পাঠানো হয়েছে, দেখা বাকি (বাতিল করতে ক্লিক করুন)"><i class="fa-solid fa-hourglass-half"></i> ডাক্তারের দেখা বাকি</button>`;
+                        } else {
+                            reportBtnHtml = `<button type="button" class="action-btn btn-rpt rpt-none" onclick="markReportAvailable('${item.id}')" title="ডাক্তারকে জানান যে রিপোর্ট আছে"><i class="fa-solid fa-file-medical"></i> রিপোর্ট আছে</button>`;
+                        }
+                    }
                     tr.innerHTML = `
                         <td><b>${serialDisplay}</b></td>
                         <td><span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px;">${slotDisplay}</span></td>
@@ -1088,6 +1158,7 @@
                                 <button type="button" class="action-btn btn-edit" onclick="editSerial('${item.id}')" title="এডিট করুন"><i class="fa-solid fa-pen"></i></button>
                                 <button type="button" class="action-btn btn-print" onclick="printSingleReceipt('${item.id}')" title="রিসিট প্রিন্ট করুন"><i class="fa-solid fa-print"></i></button>
                                 <button type="button" class="action-btn btn-delete" onclick="deleteSerial('${item.id}')" title="বাতিল করুন"><i class="fa-solid fa-trash"></i></button>
+                                ${reportBtnHtml}
                             </div>
                         </td>
                     `;
@@ -1105,7 +1176,7 @@
 
         document.getElementById('filter-date').addEventListener('change', function(){ 
             document.getElementById('filter-date-label').textContent=this.value?'পুনরায় তারিখ নির্বাচন করুন':'তারিখ নির্বাচন করুন'; 
-            renderTable(); 
+            listenSerialsForDate(this.value); 
         });
         document.getElementById('filter-doctor').addEventListener('change', renderTable);
 
