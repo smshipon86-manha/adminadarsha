@@ -614,14 +614,28 @@
         }
 
         // ডিফল্ট তারিখ = আজকের তারিখ (লোকাল সময় অনুযায়ী)
+        function localTodayStr() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+        // যতক্ষণ ব্যবহারকারী নিজে অন্য তারিখ না বাছেন, ততক্ষণ মাঝরাত পেরোলে তারিখ নিজে থেকে নতুন দিনে চলে যাবে
+        let autoFilterDate = null;
         (function initFilterDate() {
             const el = document.getElementById('filter-date');
-            const now = new Date();
-            const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            if (!el.value) el.value = todayLocal;
+            if (!el.value) el.value = localTodayStr();
+            autoFilterDate = (el.value === localTodayStr()) ? el.value : null;
             document.getElementById('filter-date-label').textContent = 'পুনরায় তারিখ নির্বাচন করুন';
             listenSerialsForDate(el.value);
         })();
+        setInterval(function() {
+            const today = localTodayStr();
+            if (autoFilterDate && autoFilterDate !== today) {
+                const el = document.getElementById('filter-date');
+                el.value = today;
+                autoFilterDate = today;
+                listenSerialsForDate(today);
+            }
+        }, 60000);
 
         window.updateInternetStatus = function() {
             const status = document.getElementById('online-status');
@@ -1176,6 +1190,7 @@
 
         document.getElementById('filter-date').addEventListener('change', function(){ 
             document.getElementById('filter-date-label').textContent=this.value?'পুনরায় তারিখ নির্বাচন করুন':'তারিখ নির্বাচন করুন'; 
+            autoFilterDate = (this.value === localTodayStr()) ? this.value : null;
             listenSerialsForDate(this.value); 
         });
         document.getElementById('filter-doctor').addEventListener('change', renderTable);
