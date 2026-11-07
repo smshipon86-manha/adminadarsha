@@ -123,6 +123,27 @@
             .management-grid { grid-template-columns: 1fr; }
         }
     </style>
+<style>
+.bl-nav{display:flex;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid #e2e8f0;flex-wrap:wrap}
+.bl-nav button{border:1px solid #cbd5e1;background:#f8fafc;padding:9px 18px;border-radius:8px;font-weight:bold;cursor:pointer;font-family:inherit;font-size:14px}
+.bl-nav button.on{background:#0d9488;color:#fff;border-color:#0d9488}
+.bl-tbl{width:100%;border-collapse:collapse;font-size:13px}.bl-tbl th,.bl-tbl td{border-bottom:1px solid #e2e8f0;padding:6px 8px;text-align:left}
+.bl-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.bl-tot b{font-size:18px}.bl-btn{border:0;background:#0d9488;color:#fff;padding:9px 16px;border-radius:8px;cursor:pointer;font-weight:bold;font-family:inherit}
+.bl-btn.g{background:#64748b}
+.bl-3{display:grid;grid-template-columns:minmax(300px,1fr) minmax(380px,1.35fr) minmax(250px,.75fr);gap:12px;align-items:start}
+@media(max-width:1000px){.bl-3{grid-template-columns:1fr}}
+.bl-pn{border-radius:12px;padding:12px}.bl-pl{background:#166534;color:#fff}.bl-pm{background:#e2e8f0}.bl-pr{background:#f5deb3}
+.bl-pn h4{margin:0 0 10px;font-size:15px}
+.bl-r{display:flex;align-items:center;gap:6px;margin-bottom:7px}.bl-r label{width:92px;font-size:13px;font-weight:bold;flex-shrink:0}
+.bl-r .input-control{flex:1;min-width:0;padding:6px 8px;color:#0f172a}
+.bl-box{flex:1;background:#fff;border-radius:6px;padding:6px 10px;text-align:right;font-size:20px;font-weight:bold;color:#0f172a}.bl-box.y{background:#fde047}
+.bl-scroll{max-height:330px;min-height:260px;overflow:auto;background:#fff;border-radius:8px}
+#sec-billing .input-control:focus,#sec-billing .bl-tbl input:focus{background:#fef08a!important;outline:2px solid #eab308}
+.bl-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.bl-x{border:0;background:transparent;color:#dc2626;font-size:13px;cursor:pointer;padding:0 6px;line-height:1}
+.bl-scroll .bl-tbl th,.bl-scroll .bl-tbl td{padding:3px 6px;font-size:12px}.bl-btn.r{background:#dc2626}.bl-msg{color:#b91c1c;font-size:13px;margin:6px 0}
+</style>
 </head>
 <body>
 
@@ -153,6 +174,9 @@
         <span id="online-status" class="loading-badge"><i class="fa-solid fa-spinner fa-spin"></i> সংযোগ পরীক্ষা করা হচ্ছে...</span>
         <button type="button" class="btn-logout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> লগআউট</button>
     </header>
+<div class="bl-nav"><button type="button" data-s="serial" class="on" onclick="showSection('serial')"><i class="fa-solid fa-list-ol"></i> সিরিয়াল ম্যানেজমেন্ট</button><button type="button" data-s="billing" onclick="showSection('billing')"><i class="fa-solid fa-file-invoice-dollar"></i> ইনভয়েস ও বিলিং</button></div>
+<script>function showSection(s){document.getElementById('sec-serial').style.display=s==='serial'?'':'none';document.getElementById('sec-billing').style.display=s==='billing'?'':'none';document.querySelectorAll('.bl-nav button').forEach(function(b){b.classList.toggle('on',b.dataset.s===s)});if(s==='billing'&&window.blInit)window.blInit();}</script>
+<div id="sec-serial">
 
     <div class="container">
         <!-- New Serial Form Card -->
@@ -307,6 +331,36 @@
     </div>
 
 
+</div><!-- /sec-serial -->
+<div id="sec-billing" style="display:none"><div class="container">
+<div class="card">
+<div id="bl-msg" class="bl-msg"></div>
+<div class="bl-3">
+<div class="bl-pn bl-pl"><h4>রোগীর তথ্য</h4>
+<div class="bl-r"><label>রোগী আইডি</label><input id="bl-pid" class="input-control" value="" readonly style="font-weight:bold"></div><div class="bl-r"><label>রোগীর নাম</label><input id="bl-name" type="text" class="input-control" placeholder="" ></div><div class="bl-r"><label>লিঙ্গ / বয়স</label><select id="bl-gender" class="input-control"><option value="">-- নির্বাচন --</option><option>পুরুষ</option><option>মহিলা</option><option>অন্যান্য</option></select><input id="bl-age" type="text" class="input-control" placeholder="বয়স" ></div><div class="bl-r"><label>মোবাইল</label><input id="bl-phone" type="tel" class="input-control" placeholder="" ></div><div class="bl-r"><label>ঠিকানা</label><input id="bl-address" type="text" class="input-control" placeholder="" ></div><div class="bl-r"><label>কনসাল্টেন্ট</label><select id="bl-cons" class="input-control"></select></div><div class="bl-r"><label>C/O নাম</label><select id="bl-co" class="input-control"></select></div>
+</div>
+<div class="bl-pn bl-pm"><h4>পরীক্ষার তথ্য</h4>
+<div class="bl-r"><input id="bl-tname" list="bl-tl" class="input-control" placeholder="পরীক্ষার নাম বাছুন (ক্লিক করলেই যোগ হবে)"><datalist id="bl-tl"></datalist><input id="bl-trate" type="number" min="0" class="input-control" placeholder="রেট" style="flex:none;width:80px"></div>
+<div class="bl-scroll"><table class="bl-tbl"><thead><tr><th>#</th><th>পরীক্ষার নাম</th><th>রেট</th><th></th></tr></thead><tbody id="bl-items"></tbody></table></div>
+<div class="bl-r" style="margin-top:8px"><label>মন্তব্য</label><input id="bl-remarks" type="text" class="input-control" placeholder="" ></div></div>
+<div class="bl-pn bl-pr"><h4>হিসাবের তথ্য</h4>
+<div class="bl-r"><label>মোট টাকা</label><div class="bl-box"><span id="bl-total">0</span></div></div>
+<div class="bl-r"><label>ডিসকাউন্ট টাকা</label><input id="bl-dtk" type="number" class="input-control" placeholder="" min="0"></div>
+<div class="bl-r"><label>ডিসকাউন্ট %</label><input id="bl-dpc" type="number" class="input-control" placeholder="" min="0" max="100"></div>
+<div class="bl-r"><label>প্রদেয়</label><div class="bl-box y"><span id="bl-pay">0</span></div></div>
+<div class="bl-r"><label>জমা টাকা</label><input id="bl-paid" type="number" class="input-control" placeholder="" min="0"></div>
+<div class="bl-r"><label>বাকি টাকা</label><div class="bl-box" style="color:#dc2626"><span id="bl-due">0</span></div></div>
+<button type="button" id="bl-save" class="bl-btn" style="width:100%;padding:14px;font-size:16px;margin-top:6px" onclick="blSave()"><i class="fa-solid fa-print"></i> পোস্ট অ্যান্ড প্রিন্ট</button></div>
+</div>
+<div class="bl-bar"><button type="button" class="bl-btn g" onclick="blClear()">ক্লিয়ার</button></div></div>
+<div class="card"><div class="card-title"><span><i class="fa-solid fa-clock-rotate-left"></i> ইনভয়েসের তালিকা</span></div>
+<div class="form-grid"><div class="form-group"><label>তারিখ</label><input id="bl-ldate" type="date" class="input-control" ></div></div><div class="bl-bar" style="margin:4px 0 8px"><button type="button" id="bl-duebtn" class="bl-btn" onclick="blDueMode()">সব বাকি দেখুন</button><button type="button" class="bl-btn g" onclick="blCsv()"><i class="fa-solid fa-download"></i> তালিকা ডাউনলোড (Excel/CSV)</button><button type="button" class="bl-btn r bl-test" onclick="blRmAll()">এই তালিকার সব মুছুন (টেস্ট)</button><button type="button" class="bl-btn g bl-test" onclick="blResetNo()">আইডি ০০০১ থেকে রিসেট (টেস্ট)</button></div><div id="bl-sum" style="margin:8px 0;font-weight:bold"></div>
+<div class="table-responsive"><table class="bl-tbl"><thead><tr><th>নং</th><th>রোগী</th><th>কনসাল্টেন্ট</th><th>প্রদেয়</th><th>জমা</th><th>বাকি</th><th>অবস্থা</th><th></th></tr></thead><tbody id="bl-list"></tbody></table></div></div>
+<div class="card"><div class="card-title"><span><i class="fa-solid fa-flask"></i> পরীক্ষার নাম ও রেট সেটআপ</span></div>
+<div class="form-grid"><div class="form-group"><label>পরীক্ষার নাম</label><input id="bl-sname" type="text" class="input-control" ></div><div class="form-group"><label>রেট</label><input id="bl-srate" type="number" class="input-control" min="0"></div><div class="form-group"><label>&nbsp;</label><button type="button" class="bl-btn" onclick="blTAdd()">যোগ করুন</button></div></div>
+<details style="margin:8px 0"><summary style="cursor:pointer">একসাথে অনেক পরীক্ষা যোগ (প্রতি লাইনে: নাম, রেট)</summary><textarea id="bl-bulk" rows="5" class="input-control" style="width:100%;margin-top:6px"></textarea><button type="button" class="bl-btn g" style="margin-top:6px" onclick="blBulk()">লাইনগুলো যোগ করুন</button></details>
+<div class="table-responsive"><table class="bl-tbl"><thead><tr><th>পরীক্ষা</th><th>রেট</th><th></th></tr></thead><tbody id="bl-setup"></tbody></table></div></div>
+</div></div>
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -1273,5 +1327,89 @@
         initializeManagementData();
         updateInternetStatus();
     </script>
+<script type="module">
+import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, limit, runTransaction, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const db=getFirestore(getApp()), auth=getAuth(getApp());
+const TEST_MODE=true; // টেস্ট শেষ হলে false করুন: ডিলিট ও রিসেট বাটন লুকিয়ে যাবে
+const ADMIN_NAME='Momin'; // রসিদের Prepared by এ এই নাম ছাপা হয়
+const $=id=>document.getElementById('bl-'+id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n=v=>Math.max(0,parseFloat(v)||0), r2=v=>Math.round(v*100)/100;
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+let tests=[],refs=[],items=[],invs=[],inited=false,unsub=null,dueMode=false;
+const rd=async c=>(await getDocs(collection(db,c))).docs.map(d=>({id:d.id,...d.data()}));
+const opts=a=>a.map(x=>'<option>'+esc(x.name)+'</option>').join('');
+function recalc(){const total=items.reduce((a,b)=>a+n(b.rate),0);const disc=Math.min(total,n($('dtk').value)+total*n($('dpc').value)/100);const pay=r2(total-disc),paid=n($('paid').value),due=Math.max(0,r2(pay-paid));$('total').textContent=total;$('pay').textContent=pay;$('due').textContent=due;return{total,disc:r2(disc),pay,paid,due}}
+function drawItems(){$('items').innerHTML=items.map((it,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(it.name)+'</td><td><input type="number" min="0" value="'+it.rate+'" style="width:70px;padding:2px 4px;font-size:12px" onchange="blRate('+i+',this.value)"></td><td><button type="button" class="bl-x" onclick="blDel('+i+')">✕</button></td></tr>').join('')||'<tr><td colspan="4" style="text-align:center;color:#94a3b8">কোনো পরীক্ষা যোগ হয়নি</td></tr>';recalc()}
+window.blRate=(i,v)=>{items[i].rate=n(v);recalc()};window.blDel=i=>{items.splice(i,1);drawItems()};
+window.blAdd=()=>{const name=$('tname').value.trim();if(!name)return;items.push({name,rate:n($('trate').value)});$('tname').value='';$('trate').value='';drawItems();$('tname').focus()};
+$('tname').addEventListener('input',e=>{const t=tests.find(x=>x.name===$('tname').value.trim());if(!t)return;$('trate').value=t.rate;if(!e.inputType||e.inputType==='insertReplacementText'){items.push({name:t.name,rate:n(t.rate)});$('tname').value='';$('trate').value='';drawItems();$('tname').focus()}});
+['dtk','dpc','paid'].forEach(k=>$(k).addEventListener('input',recalc));
+function drawSetup(){$('tl').innerHTML=tests.map(t=>'<option value="'+esc(t.name)+'">').join('');$('setup').innerHTML=tests.map(t=>'<tr><td>'+esc(t.name)+'</td><td>'+t.rate+'</td><td><button type="button" class="bl-btn g" onclick="blTEdit(\''+t.id+'\')">রেট বদলান</button> <button type="button" class="bl-btn r" onclick="blTDel(\''+t.id+'\')">মুছুন</button></td></tr>').join('')||'<tr><td colspan="3" style="color:#94a3b8">এখনো কোনো পরীক্ষা নেই</td></tr>'}
+async function loadTests(){tests=(await rd('bill_tests')).sort((a,b)=>String(a.name).localeCompare(String(b.name)));drawSetup()}
+async function showNextId(){try{const now=new Date(),ym=String(now.getFullYear()).slice(2)+String(now.getMonth()+1).padStart(2,'0');const s=await getDoc(doc(db,'bill_counters',ym));$('pid').value=ym+String((s.exists()?s.data().last:0)+1).padStart(4,'0')}catch(e){$('pid').value=''}}
+window.blInit=async()=>{document.querySelectorAll('.bl-test').forEach(e=>e.style.display=TEST_MODE?'':'none');if(inited)return;inited=true;$('ldate').value=today();try{const[d,o]=await Promise.all([rd('doctors'),rd('operators')]);$('cons').innerHTML='<option value="">-- নির্বাচন করুন --</option>'+opts(d);$('co').innerHTML='<option value="">-- নির্বাচন করুন --</option>'+opts(o);await loadTests()}catch(e){console.error(e);inited=false;$('msg').textContent='ডাটা লোড হয়নি। ফায়ারবেস Rules এ বিলিংয়ের কালেকশনগুলো যোগ হয়েছে কি না দেখুন।'}drawItems();listen();showNextId()};
+window.blClear=()=>{['name','age','phone','address','co','dtk','dpc','paid','tname','trate','remarks'].forEach(k=>$(k).value='');$('gender').selectedIndex=0;items=[];drawItems();$('name').focus()};
+const W1=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'],W2=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+const w99=k=>k<20?W1[k]:W2[Math.floor(k/10)]+(k%10?' '+W1[k%10]:''),w999=k=>(k>=100?W1[Math.floor(k/100)]+' Hundred'+(k%100?' ':''):'')+(k%100?w99(k%100):'');
+function words(k){k=Math.round(k);if(!k)return'Zero';let s='';const cr=Math.floor(k/1e7);k%=1e7;const lk=Math.floor(k/1e5);k%=1e5;const th=Math.floor(k/1e3);k%=1e3;if(cr)s+=w99(cr)+' Crore ';if(lk)s+=w99(lk)+' Lakh ';if(th)s+=w99(th)+' Thousand ';if(k)s+=w999(k);return s.trim()}
+function printInv(d){const w=window.open('','_blank','width=820,height=900');if(!w){alert('পপআপ ব্লক করা আছে, অনুমতি দিন');return}
+const rows=d.items.map((i,k)=>'<tr><td>'+(k+1)+'</td><td>'+esc(i.name)+'</td><td style="text-align:center">1</td><td style="text-align:right">'+Number(i.rate).toFixed(2)+'</td></tr>').join('');
+const f=v=>Number(v||0).toFixed(2),stamp=d.status==='cancelled'?'CANCELLED':(n(d.due)>0?'DUE':'PAID');
+w.document.write('<!DOCTYPE html><html lang="bn"><head><meta charset="UTF-8"><title>ক্যাশ মেমো '+esc(d.invNo)+'</title><style>body{font-family:Arial,sans-serif;font-size:13px;margin:18px;color:#000}h1{margin:0;text-align:center;font-size:24px}.c{text-align:center;margin:2px 0}.bx{border:1px solid #444;border-radius:10px;padding:8px 12px;margin:8px 0;display:flex;justify-content:space-between}.bx div{line-height:1.8}table.t{width:100%;border-collapse:collapse}table.t th,table.t td{border:1px solid #444;padding:4px 8px}table.t th{background:#f1f5f9}.s{display:flex;justify-content:space-between;align-items:flex-start;margin-top:8px}table.m td{border:1px solid #444;padding:3px 10px;text-align:right;min-width:90px}table.m td:first-child{text-align:left;font-weight:bold}.st{margin:22px 0 0 40px;border:2px solid #444;border-radius:14px;padding:10px 40px;font-size:30px;font-weight:bold;letter-spacing:3px}</style></head><body>'+
+'<h1>আদর্শ ডায়াগনস্টিক সেন্টার</h1><div class="c">Hospital Gate, (Thana Road), Dhonut, Bogura</div><div class="c"><b>Mobile: 01771-500085, 01788-127017</b></div><div class="c" style="text-align:right;font-size:11px">Print Time : '+new Date().toLocaleString('en-GB')+'</div><div class="c"><b>CASH MEMO</b></div>'+
+'<div class="bx"><div>Patient Id : <b>'+esc(d.invNo)+'</b><br>Name : '+esc(d.pname)+'<br>Mobile : '+esc(d.phone)+'<br>Doctor Name : '+esc(d.consultant)+'<br>C/O : '+esc(d.operator)+'</div><div>Date : '+esc(d.date)+' &nbsp; Time : '+esc(d.time)+'<br>Age : '+esc(d.age)+' &nbsp; Gender : '+esc(d.gender)+'<br>Address : '+esc(d.address)+'</div></div>'+
+'<table class="t"><tr><th style="width:50px">SL No</th><th>Investigation Name</th><th style="width:60px">Qnt</th><th style="width:110px">Amount</th></tr>'+rows+'</table>'+
+'<div class="s"><div class="st">'+stamp+'</div><table class="m"><tr><td>Total :</td><td>'+f(d.total)+'</td></tr><tr><td>Less :</td><td>'+f(d.discount)+'</td></tr><tr><td>Payable :</td><td>'+f(d.payable)+'</td></tr><tr><td>Paid :</td><td>'+f(d.paid)+'</td></tr><tr><td>Due :</td><td>'+f(d.due)+'</td></tr></table></div>'+
+'<p><b>In Words :</b> '+words(d.payable)+' Taka Only.</p>'+(d.remarks?'<p>Remarks : '+esc(d.remarks)+'</p>':'')+'<p>Prepared by: <b>'+esc(d.preparedBy||ADMIN_NAME)+'</b></p></body></html>');w.document.close();setTimeout(()=>w.print(),400)}
+window.blSave=async()=>{const name=$('name').value.trim(),op=$('co').value;if(!name)return alert('রোগীর নাম দিন');if(!$('gender').value)return alert('লিঙ্গ নির্বাচন করুন');if(!items.length)return alert('অন্তত একটি পরীক্ষা যোগ করুন');if(!op)return alert('C/O নাম নির্বাচন করুন');const c=recalc();if(c.paid>c.pay)return alert('জমা প্রদেয়র চেয়ে বেশি হতে পারে না');if(!navigator.onLine)return alert('ইন্টারনেট সংযোগ নেই');
+const btn=$('save');btn.disabled=true;try{const now=new Date(),ym=String(now.getFullYear()).slice(2)+String(now.getMonth()+1).padStart(2,'0');const cref=doc(db,'bill_counters',ym),iref=doc(collection(db,'bill_invoices'));let invNo='';
+const data={date:today(),time:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),pname:name,gender:$('gender').value,age:$('age').value.trim(),phone:$('phone').value.trim(),address:$('address').value.trim(),remarks:$('remarks').value.trim(),consultant:$('cons').value,co:$('co').value.trim(),items:items.map(i=>({name:i.name,rate:n(i.rate)})),total:c.total,discount:c.disc,payable:c.pay,paid:c.paid,due:c.due,operator:op,preparedBy:ADMIN_NAME,createdBy:(auth.currentUser&&auth.currentUser.email)||'',status:'active',ts:now.toISOString()};
+await runTransaction(db,async tx=>{const s=await tx.get(cref);const seq=(s.exists()?s.data().last:0)+1;tx.set(cref,{last:seq});invNo=ym+String(seq).padStart(4,'0');tx.set(iref,{...data,invNo})});data.invNo=invNo;
+printInv(data);blClear();showNextId()}catch(e){console.error(e);alert('বিল সেভ হয়নি, আবার চেষ্টা করুন। (ইন্টারনেট বা Rules দেখুন)')}btn.disabled=false};
+function drawList(){const view=dueMode?invs.filter(x=>x.status!=='cancelled'):invs;const a=view.filter(x=>x.status!=='cancelled');$('sum').textContent='মোট বিল: '+a.length+' | প্রদেয়: '+r2(a.reduce((s,x)=>s+n(x.payable),0))+' | জমা: '+r2(a.reduce((s,x)=>s+n(x.paid),0))+' | বাকি: '+r2(a.reduce((s,x)=>s+n(x.due),0));
+$('list').innerHTML=view.map(x=>'<tr'+(x.status==='cancelled'?' style="color:#94a3b8;text-decoration:line-through"':'')+'><td>'+esc(x.invNo)+'<br><small>'+esc(x.date)+'</small></td><td>'+esc(x.pname)+'</td><td>'+esc(x.consultant)+'</td><td>'+x.payable+'</td><td>'+x.paid+'</td><td>'+x.due+'</td><td>'+(x.status==='cancelled'?'বাতিল':'সক্রিয়')+'</td><td><button type="button" class="bl-btn g" onclick="blRe(\''+x.id+'\')">প্রিন্ট</button>'+(x.status!=='cancelled'&&n(x.due)>0?' <button type="button" class="bl-btn" onclick="blPay(\''+x.id+'\')">আদায়</button>':'')+(TEST_MODE?' <button type="button" class="bl-btn r" onclick="blRm(\''+x.id+'\')">মুছুন</button>':'')+(x.status==='cancelled'?'':' <button type="button" class="bl-btn r" onclick="blCancel(\''+x.id+'\')">বাতিল</button>')+'</td></tr>').join('')||'<tr><td colspan="8" style="color:#94a3b8">এই তারিখে কোনো ইনভয়েস নেই</td></tr>'}
+function listen(){if(unsub){unsub();unsub=null}invs=[];const d=$('ldate').value;if(!dueMode&&!d){drawList();return}
+const q=dueMode?query(collection(db,'bill_invoices'),where('due','>',0)):query(collection(db,'bill_invoices'),where('date','==',d));
+unsub=onSnapshot(q,s=>{invs=s.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));drawList()},e=>console.error(e))}
+window.blDueMode=()=>{dueMode=!dueMode;$('duebtn').textContent=dueMode?'তারিখ অনুযায়ী দেখুন':'সব বাকি দেখুন';$('ldate').disabled=dueMode;listen()};
+window.blPay=async id=>{const x=invs.find(i=>i.id===id);if(!x)return;const v=prompt('ইনভয়েস '+x.invNo+' ('+x.pname+')\nবাকি: '+x.due+' টাকা\nকত টাকা আদায় হলো?',x.due);if(v===null)return;const amt=r2(n(v));if(!(amt>0))return alert('সঠিক টাকার অংক দিন');if(!navigator.onLine)return alert('ইন্টারনেট সংযোগ নেই');
+try{await runTransaction(db,async tx=>{const ref=doc(db,'bill_invoices',id),s=await tx.get(ref);if(!s.exists())throw new Error('missing');const d=s.data();if(d.status==='cancelled')throw new Error('cancelled');if(amt>n(d.due))throw new Error('over');const now=new Date();const pay=(d.payments||[]).concat([{amt,date:today(),time:now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),by:(auth.currentUser&&auth.currentUser.email)||''}]);tx.update(ref,{paid:r2(n(d.paid)+amt),due:r2(n(d.due)-amt),payments:pay})});alert('টাকা আদায় রেকর্ড হয়েছে')}catch(e){alert(e.message==='over'?'আদায়ের টাকা বাকির চেয়ে বেশি হতে পারে না':e.message==='cancelled'?'বাতিল ইনভয়েসে আদায় করা যায় না':'আদায় সেভ হয়নি, আবার চেষ্টা করুন')}};
+window.blRm=async id=>{const x=invs.find(i=>i.id===id);if(!x||!confirm('ইনভয়েস '+x.invNo+' ('+x.pname+') সম্পূর্ণ মুছে ফেলবেন? ফেরত আনা যাবে না।'))return;try{await deleteDoc(doc(db,'bill_invoices',id))}catch(e){alert('মোছা যায়নি')}};
+window.blRmAll=async()=>{const view=dueMode?invs.filter(x=>x.status!=='cancelled'):invs;if(!view.length)return alert('মোছার মতো ইনভয়েস নেই');if(!confirm('এই তালিকার সব '+view.length+'টি ইনভয়েস মুছে ফেলবেন? ফেরত আনা যাবে না।'))return;try{for(let i=0;i<view.length;i+=400){const b=writeBatch(db);view.slice(i,i+400).forEach(x=>b.delete(doc(db,'bill_invoices',x.id)));await b.commit()}}catch(e){alert('মোছা যায়নি')}};
+window.blResetNo=async()=>{if(!confirm('সব মাসের ইনভয়েস নাম্বারের ক্রম মুছে ০০০১ থেকে শুরু হবে। চালিয়ে যাবেন?'))return;try{const any=await getDocs(query(collection(db,'bill_invoices'),limit(1)));if(!any.empty)return alert('আগে সব তারিখের সব ইনভয়েস মুছুন, তারপর রিসেট করুন।');const cs=await getDocs(collection(db,'bill_counters'));for(const c of cs.docs)await deleteDoc(c.ref);showNextId();alert('আইডি ক্রম রিসেট হয়েছে')}catch(e){alert('রিসেট হয়নি')}};
+window.blCsv=()=>{const view=dueMode?invs.filter(x=>x.status!=='cancelled'):invs;if(!view.length)return alert('ডাউনলোড করার মতো ইনভয়েস নেই');
+const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+const head=['ইনভয়েস নং','তারিখ','সময়','রোগীর নাম','বয়স','লিঙ্গ','মোবাইল','কনসাল্টেন্ট','C/O','পরীক্ষাসমূহ','মোট','ডিসকাউন্ট','প্রদেয়','জমা','বাকি','অবস্থা'];
+const rows=view.slice().reverse().map(x=>[x.invNo,x.date,x.time,x.pname,x.age,x.gender,x.phone?'\t'+x.phone:'',x.consultant,x.operator,(x.items||[]).map(i=>i.name).join(' + '),x.total,x.discount,x.payable,x.paid,x.due,x.status==='cancelled'?'বাতিল':'সক্রিয়']);
+const act=view.filter(x=>x.status!=='cancelled'),S=k=>r2(act.reduce((s,x)=>s+n(x[k]),0));
+rows.push(['সর্বমোট (বাতিল বাদে)','','','','','','','','',act.length+' টি বিল',S('total'),S('discount'),S('payable'),S('paid'),S('due'),'']);
+const csv='\ufeff'+[head].concat(rows).map(r=>r.map(q).join(',')).join('\r\n');
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=(dueMode?'baki-list':'invoices-'+$('ldate').value)+'.csv';document.body.appendChild(a);a.click();a.remove()};
+$('ldate').addEventListener('change',listen);
+window.blRe=id=>{const x=invs.find(i=>i.id===id);if(x)printInv(x)};
+window.blCancel=async id=>{const x=invs.find(i=>i.id===id);if(!x||!confirm('ইনভয়েস '+x.invNo+' বাতিল করবেন? (মুছে যাবে না, বাতিল চিহ্ন থাকবে)'))return;try{await updateDoc(doc(db,'bill_invoices',id),{status:'cancelled',cancelledBy:(auth.currentUser&&auth.currentUser.email)||'',cancelledAt:new Date().toISOString()})}catch(e){alert('বাতিল করা যায়নি')}};
+window.blTAdd=async()=>{const name=$('sname').value.trim(),rate=n($('srate').value);if(!name)return;if(tests.some(t=>t.name===name))return alert('এই নামে পরীক্ষা আগেই আছে');try{await addDoc(collection(db,'bill_tests'),{name,rate});$('sname').value='';$('srate').value='';await loadTests()}catch(e){alert('সেভ হয়নি')}};
+window.blTEdit=async id=>{const t=tests.find(x=>x.id===id),v=prompt(t.name+' — নতুন রেট',t.rate);if(v===null)return;try{await updateDoc(doc(db,'bill_tests',id),{rate:n(v)});await loadTests()}catch(e){alert('সেভ হয়নি')}};
+window.blTDel=async id=>{const t=tests.find(x=>x.id===id);if(!confirm('"'+t.name+'" মুছবেন? পুরনো ইনভয়েসে প্রভাব পড়বে না।'))return;try{await deleteDoc(doc(db,'bill_tests',id));await loadTests()}catch(e){alert('মোছা যায়নি')}};
+window.blBulk=async()=>{const have=new Set(tests.map(t=>t.name));const rows=[];$('bulk').value.split('\n').forEach(l=>{const i=l.lastIndexOf(',');if(i<1)return;const name=l.slice(0,i).trim(),rate=n(l.slice(i+1));if(name&&!have.has(name)){have.add(name);rows.push({name,rate})}});if(!rows.length)return alert('যোগ করার মতো নতুন লাইন নেই');try{for(let i=0;i<rows.length;i+=400){const b=writeBatch(db);rows.slice(i,i+400).forEach(r=>b.set(doc(collection(db,'bill_tests')),r));await b.commit()}$('bulk').value='';await loadTests();alert(rows.length+'টি পরীক্ষা যোগ হয়েছে')}catch(e){alert('সেভ হয়নি')}};
+
+const ORDER=['name','gender','age','phone','address','cons','co','tname'];
+const go=id=>{const e=$(id);if(e){e.focus();if(e.tagName==='INPUT'&&e.type!=='date')e.select()}};
+ORDER.forEach((id,k)=>{const el=$(id),nx=ORDER[k+1];
+ if(el.tagName==='SELECT'){el.addEventListener('focus',()=>{delete el.dataset.o});el.addEventListener('change',()=>{if(el.dataset.o==='1'){delete el.dataset.o;go(nx)}})}
+ el.addEventListener('keydown',e=>{if(e.key!=='Enter')return;e.preventDefault();
+  if(el.tagName==='SELECT'){if(el.dataset.o==='1'){delete el.dataset.o;go(nx)}else{el.dataset.o='1';try{el.showPicker()}catch(_){}}return}
+  if(id==='age'&&!el.value.trim()){el.style.outline='2px solid #dc2626';el.placeholder='বয়স লিখুন';return}
+  if(id==='tname'){const v=$('tname').value.trim();if(v){const x=tests.find(z=>z.name===v);if(x){$('trate').value=x.rate;blAdd()}else go('trate')}else if(items.length)go('dtk');return}
+  go(nx)})});
+$('age').addEventListener('input',()=>{$('age').style.outline=''});
+$('trate').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();blAdd()}});
+$('dtk').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go('dpc')}});
+$('dpc').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();go('paid')}});
+$('paid').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('save').focus()}});
+</script>
 </body>
 </html>
